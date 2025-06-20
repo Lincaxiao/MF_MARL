@@ -19,7 +19,7 @@ DEVICE = torch.device('cpu')
 print("Using device:", DEVICE)
 
 class Actor(nn.Module):
-    def __init__(self, obs_dim, act_dim, hidden_dim=64):
+    def __init__(self, obs_dim, act_dim, hidden_dim=256):
         super().__init__()
         self.fc = nn.Sequential(
             nn.Linear(obs_dim, hidden_dim),
@@ -34,7 +34,7 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, global_dim, hidden_dim=64):
+    def __init__(self, global_dim, hidden_dim=256):
         super(Critic, self).__init__()
         self.fc1 = nn.Linear(global_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
@@ -48,7 +48,7 @@ class Critic(nn.Module):
 
 
 class GaussianActor(nn.Module):
-    def __init__(self, obs_dim, action_low, action_high, hidden_dim=64):
+    def __init__(self, obs_dim, action_low, action_high, hidden_dim=256):
         super().__init__()
         self.fc = nn.Sequential(
             nn.Linear(obs_dim, hidden_dim),
@@ -67,14 +67,80 @@ class GaussianActor(nn.Module):
         std = torch.exp(self.log_std)
         return mu, std
 
+    # def sample(self, x):
+    #     mu, std = self.forward(x)
+    #     dist = torch.distributions.Normal(mu, std)
+    #     action = dist.rsample()
+    #     action_clipped = torch.clamp(action, self.action_low, self.action_high)
+    #     log_prob = dist.log_prob(action)
+    #     return action_clipped.squeeze(-1), log_prob.squeeze(-1), mu.squeeze(-1), std.squeeze(-1)
     def sample(self, x):
+        # 原先的 mu/std 计算不变
         mu, std = self.forward(x)
         dist = torch.distributions.Normal(mu, std)
-        action = dist.rsample()
-        action_clipped = torch.clamp(action, self.action_low, self.action_high)
-        log_prob = dist.log_prob(action)
-        return action_clipped.squeeze(-1), log_prob.squeeze(-1), mu.squeeze(-1), std.squeeze(-1)
 
+        # re-param 采样
+        z = dist.rsample()                     # raw action
+        log_prob_z = dist.log_prob(z)          # 对应的 log prob
+
+        # squash 到 (-1,1)
+        y = torch.tanh(z)
+
+        # Jacobian 校正：logp = logπ(z) - ∑ log(1 - tanh(z)^2)
+        log_prob = log_prob_z - torch.log(1 - y.pow(2) + 1e-6)
+        log_prob = log_prob.sum(dim=-1, keepdim=True)
+
+        # 线性映射到 [low, high]
+        action = self.action_low + (y + 1) * 0.5 * (self.action_high - self.action_low)
+
+        # 保持原来 squeeze 行为
+        return (
+            action.squeeze(-1),
+            log_prob.squeeze(-1),
+            mu.squeeze(-1),
+            std.squeeze(-1),
+        )
+
+
+class SACGaussianActor(nn.Module):
+    """SAC Actor with squashed Gaussian policy."""
+    def __init__(self, obs_dim, act_dim, hidden_dim=256):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(obs_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU()
+        )
+        self.mu_layer = nn.Linear(hidden_dim, act_dim)
+        self.log_std_layer = nn.Linear(hidden_dim, act_dim)
+
+    def forward(self, obs, deterministic=False, with_logprob=True):
+        net_out = self.net(obs)
+        mu = self.mu_layer(net_out)
+        log_std = self.log_std_layer(net_out)
+        log_std = torch.clamp(log_std, -20, 2)
+        std = torch.exp(log_std)
+
+        dist = normal.Normal(mu, std)
+
+        if deterministic:
+            # For evaluation, return deterministic action (mean)
+            action = mu
+        else:
+            action = dist.rsample()
+
+        if with_logprob:
+            # Compute log_prob from the squashed distribution
+            log_prob = dist.log_prob(action)
+            # Apply correction for the tanh squashing function
+            log_prob -= torch.log(1 - torch.tanh(action).pow(2) + 1e-6)
+            log_prob = log_prob.sum(axis=-1)
+        else:
+            log_prob = None
+
+        action = torch.tanh(action)
+        return action, log_prob
 
 class MAPPOAgent:
     def __init__(self, obs_dim, act_dim, global_dim, lr=lr, continuous=False, action_low=1.0, action_high=10.0):
@@ -237,7 +303,7 @@ class MASACAgent:
     def __init__(self, obs_dim, act_dim, global_dim, action_low=-1.0, action_high=1.0,
                  lr=lr, gamma=0.99, tau=0.005, alpha=0.2,
                  automatic_entropy_tuning=True,
-                 buffer_size=1_000_000, hidden_dim=256):
+                 buffer_size=5_000_0, hidden_dim=256):
         self.obs_dim = obs_dim
         self.act_dim = act_dim if isinstance(act_dim, int) else int(act_dim)
         self.action_low = action_low
@@ -248,7 +314,7 @@ class MASACAgent:
         self.automatic_entropy_tuning = automatic_entropy_tuning
 
         # Actor
-        self.actor = GaussianActor(obs_dim, action_low, action_high, hidden_dim).to(DEVICE)
+        self.actor = SACGaussianActor(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
         # Critic
         self.q1 = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
         self.q2 = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
@@ -279,16 +345,14 @@ class MASACAgent:
 
     @torch.no_grad()
     def select(self, obs, evaluate=False):
-        """与 PPO 接口保持一致，返回动作和 log_prob"""
+        """Select action for interaction."""
         obs_tensor = torch.tensor(obs, dtype=torch.float32, device=DEVICE).unsqueeze(0)
-        if evaluate:
-            mu, _ = self.actor.forward(obs_tensor)
-            action = mu
-            log_prob = torch.zeros(1, device=DEVICE)
-        else:
-            action, log_prob, _, _ = self.actor.sample(obs_tensor)
-        action = action.clamp(self.action_low, self.action_high)
-        return float(action.cpu().item()), float(log_prob.cpu().item())
+        action_tanh, log_prob = self.actor(obs_tensor, deterministic=evaluate, with_logprob=True)
+        
+        # Scale action to environment range
+        scaled_action = self.action_low + (action_tanh + 1) * 0.5 * (self.action_high - self.action_low)
+        
+        return float(scaled_action.cpu().item()), float(log_prob.cpu().item())
 
     def store(self, obs, act, reward, next_obs, done, global_obs, next_global_obs):
         """写入含全局信息的数据"""
@@ -311,10 +375,11 @@ class MASACAgent:
 
             # ----------------------- 更新 Q 网络 -----------------------
             with torch.no_grad():
-                next_action, next_log_prob, _, _ = self.actor.sample(next_obs)
-                next_action = next_action.view(-1, self.act_dim)
-                target_q1 = self.q1_target(glob_next_obs, next_action)
-                target_q2 = self.q2_target(glob_next_obs, next_action)
+                next_action_tanh, next_log_prob = self.actor(next_obs, with_logprob=True)
+                next_action_scaled = self.action_low + (next_action_tanh + 1) * 0.5 * (self.action_high - self.action_low)
+                
+                target_q1 = self.q1_target(glob_next_obs, next_action_scaled)
+                target_q2 = self.q2_target(glob_next_obs, next_action_scaled)
                 target_q_min = torch.min(target_q1, target_q2) - self.alpha * next_log_prob
                 target_q = rewards + (1 - dones) * self.gamma * target_q_min.unsqueeze(-1)
                 target_q = target_q.squeeze(-1)
@@ -333,10 +398,11 @@ class MASACAgent:
             self.q2_optimizer.step()
 
             # ----------------------- 更新 Actor 网络 -----------------------
-            new_actions, log_prob, _, _ = self.actor.sample(obs)
-            new_actions = new_actions.view(-1, self.act_dim)
-            q1_new = self.q1(glob_obs, new_actions)
-            q2_new = self.q2(glob_obs, new_actions)
+            new_actions_tanh, log_prob = self.actor(obs, with_logprob=True)
+            new_actions_scaled = self.action_low + (new_actions_tanh + 1) * 0.5 * (self.action_high - self.action_low)
+
+            q1_new = self.q1(glob_obs, new_actions_scaled)
+            q2_new = self.q2(glob_obs, new_actions_scaled)
             q_new = torch.min(q1_new, q2_new)
             actor_loss = (self.alpha * log_prob - q_new).mean()
 
@@ -366,13 +432,14 @@ class MASACAgent:
             value = self.q1(obs_tensor, action.view(1, -1))
         return value.cpu().item()
 
+
 ################################################
 # TD3
 ################################################
 
 class DeterministicActor(nn.Module):
     """TD3 中用于输出确定性动作的 Actor 网络"""
-    def __init__(self, obs_dim, act_dim, action_low=-1.0, action_high=1.0, hidden_dim=256):
+    def __init__(self, obs_dim, act_dim, hidden_dim=256):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(obs_dim, hidden_dim),
@@ -380,23 +447,19 @@ class DeterministicActor(nn.Module):
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, act_dim),
-            nn.Tanh()
+            nn.Tanh()  # 输出范围 [-1, 1]
         )
-        self.register_buffer('action_low', torch.tensor(action_low, dtype=torch.float32))
-        self.register_buffer('action_high', torch.tensor(action_high, dtype=torch.float32))
 
     def forward(self, obs):
-        # 输出范围 [-1,1]，然后映射到指定区间
-        raw_action = self.net(obs)
-        scaled_action = (raw_action + 1.0) / 2.0 * (self.action_high - self.action_low) + self.action_low
-        return scaled_action
+        # 输出范围 [-1,1]
+        return self.net(obs)
 
 
 class MATD3Agent:
     """TD3"""
     def __init__(self, obs_dim, act_dim, global_dim, action_low=-1.0, action_high=1.0,
                  lr=lr, gamma=0.99, tau=0.005,
-                 policy_noise=0.2, noise_clip=0.5, policy_delay=2,
+                 expl_noise=0.1, policy_noise=0.2, noise_clip=0.5, policy_delay=2,
                  buffer_size=1_000_000, hidden_dim=256):
         self.obs_dim = obs_dim
         self.act_dim = act_dim if isinstance(act_dim, int) else int(act_dim)
@@ -404,13 +467,14 @@ class MATD3Agent:
         self.action_high = action_high
         self.gamma = gamma
         self.tau = tau
+        self.expl_noise = expl_noise
         self.policy_noise = policy_noise
         self.noise_clip = noise_clip
         self.policy_delay = policy_delay
 
         # Actor & Critics
-        self.actor = DeterministicActor(obs_dim, self.act_dim, action_low, action_high, hidden_dim).to(DEVICE)
-        self.actor_target = DeterministicActor(obs_dim, self.act_dim, action_low, action_high, hidden_dim).to(DEVICE)
+        self.actor = DeterministicActor(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
+        self.actor_target = DeterministicActor(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
         self.actor_target.load_state_dict(self.actor.state_dict())
 
         self.q1 = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
@@ -432,15 +496,25 @@ class MATD3Agent:
         self.total_it = 0  # 用于延迟策略更新
 
     @torch.no_grad()
-    def select(self, obs, noise_scale=0.0):
+    def select(self, obs, evaluate=False):
         obs_tensor = torch.tensor(obs, dtype=torch.float32, device=DEVICE).unsqueeze(0)
-        action = self.actor(obs_tensor).squeeze(0)
-        if noise_scale > 0.0:
-            noise = torch.normal(mean=0, std=noise_scale, size=action.shape, device=DEVICE)
-            action = action + noise
-        action = action.clamp(self.action_low, self.action_high)
-        # 为兼容性，返回 log_prob=0
-        return float(action.cpu().item()), 0.0
+        mu = self.actor(obs_tensor)
+
+        if not evaluate:
+            # 添加探索噪声
+            noise = torch.randn_like(mu) * self.expl_noise
+            mu = mu + noise
+        
+        # 将动作从 [-1, 1] 缩放到 [action_low, action_high]
+        # 注意：这里假设 actor 输出已经是 tanh 压缩过的
+        scaled_action = self.action_low + (mu + 1) * 0.5 * (self.action_high - self.action_low)
+        
+        # 裁剪到有效范围
+        action_clipped = torch.clamp(scaled_action, self.action_low, self.action_high)
+        
+        # 确定性策略没有 log_prob，返回 0.0 占位
+        return float(action_clipped.cpu().item()), 0.0
+
 
     def store(self, obs, act, reward, next_obs, done, global_obs, next_global_obs):
         """写入含全局信息的数据"""
@@ -460,16 +534,24 @@ class MATD3Agent:
             glob_obs, glob_next_obs = batch['global_obs'], batch['next_global_obs']
             actions = actions.view(-1, self.act_dim)
 
-            # 生成带噪声的下一个动作（目标策略平滑）
+            # --- 目标 Q 值计算 ---
             with torch.no_grad():
-                noise = (torch.randn_like(actions) * self.policy_noise).clamp(-self.noise_clip, self.noise_clip)
-                next_action = (self.actor_target(next_obs) + noise).clamp(self.action_low, self.action_high)
-                target_q1 = self.q1_target(glob_next_obs, next_action)
-                target_q2 = self.q2_target(glob_next_obs, next_action)
+                # 目标策略平滑: 对目标 actor 的输出添加噪声
+                next_action_tanh = self.actor_target(next_obs)
+                noise = (torch.randn_like(next_action_tanh) * self.policy_noise).clamp(-self.noise_clip, self.noise_clip)
+                next_action_tanh_noisy = next_action_tanh + noise
+                
+                # 将加噪后的动作从 [-1, 1] 缩放并裁剪到环境范围
+                next_action_scaled = self.action_low + (next_action_tanh_noisy + 1) * 0.5 * (self.action_high - self.action_low)
+                next_action_clipped = torch.clamp(next_action_scaled, self.action_low, self.action_high)
+
+                # 计算目标 Q 值
+                target_q1 = self.q1_target(glob_next_obs, next_action_clipped)
+                target_q2 = self.q2_target(glob_next_obs, next_action_clipped)
                 target_q = rewards + (1 - dones) * self.gamma * torch.min(target_q1, target_q2).unsqueeze(-1)
                 target_q = target_q.squeeze(-1)
 
-            # 更新 Critic
+            # --- Critic 更新 ---
             current_q1 = self.q1(glob_obs, actions)
             current_q2 = self.q2(glob_obs, actions)
             q1_loss = F.mse_loss(current_q1, target_q)
@@ -483,16 +565,20 @@ class MATD3Agent:
             q2_loss.backward()
             self.q2_optimizer.step()
 
-            # 延迟策略更新
+            # --- 延迟策略更新 ---
             if self.total_it % self.policy_delay == 0:
-                actor_actions = self.actor(obs)
-                actor_loss = -self.q1(glob_obs, actor_actions).mean()
+                # Actor 损失计算
+                # 注意：这里的 self.actor(obs) 是确定性动作，没有加探索噪声
+                actor_actions_tanh = self.actor(obs)
+                actor_actions_scaled = self.action_low + (actor_actions_tanh + 1) * 0.5 * (self.action_high - self.action_low)
+                actor_loss = -self.q1(glob_obs, actor_actions_scaled).mean()
 
+                # Actor 更新
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()
                 self.actor_optimizer.step()
 
-                # 更新目标网络
+                # 目标网络软更新
                 self.soft_update(self.actor, self.actor_target)
                 self.soft_update(self.q1, self.q1_target)
                 self.soft_update(self.q2, self.q2_target)
@@ -501,8 +587,9 @@ class MATD3Agent:
         """返回 Q1 的估计值（与其它 agent 接口统一）"""
         obs_tensor = torch.tensor(obs, dtype=torch.float32, device=DEVICE).unsqueeze(0)
         with torch.no_grad():
-            act = self.actor(obs_tensor)
-            value = self.q1(obs_tensor, act)
+            act_tanh = self.actor(obs_tensor)
+            act_scaled = self.action_low + (act_tanh + 1) * 0.5 * (self.action_high - self.action_low)
+            value = self.q1(obs_tensor, act_scaled)
         return value.cpu().item()
 
 

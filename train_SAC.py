@@ -79,9 +79,81 @@ def train_sac_with_log(env,
     gamma = hyperparams.get('gamma', 0.99)
     lam = hyperparams.get('lam', 0.95)  # SAC 不用，但保留
     updates_per_step = hyperparams.get('updates_per_step', 1)
+    start_timesteps = hyperparams.get('start_timesteps', 1_000_000)
 
     env.lamda = lamda_init
     alpha = 0.2  # lamda 更新系数
+
+    total_timesteps = 0
+    outer_iter = 0
+    
+    print(f"Populating replay buffer with {start_timesteps} random steps...")
+    while total_timesteps < start_timesteps:
+        _ = env.reset()
+        user_trajs_wait = [[] for _ in range(env.num_users)]
+        user_trajs_assign = [[] for _ in range(env.num_users)]
+        server_trajs = [[] for _ in range(env.num_servers)]
+
+        while not env.is_done() and total_timesteps < start_timesteps:
+            event = env.get_next_event()
+            if event is None:
+                break
+            if isinstance(event, tuple) and len(event) == 3 and event[0] == 'user':
+                _, idx, phase = event
+                obs_u = env.get_user_obs(idx)
+                gs = env.get_obs_all()
+                if phase == 'wait':
+                    w = np.random.uniform(agent_u_wait.action_low, agent_u_wait.action_high)
+                    env.step_user_wait(idx, w)
+                    user_trajs_wait[idx].append((obs_u, w, 0.0, 0.0, 0.0, gs, 0, 0, False))
+                elif phase == 'assign':
+                    act = np.random.uniform(agent_u_assign.action_low, agent_u_assign.action_high)
+                    serv_idx = env.decode_user_assign_action(int(round(act)))
+                    env.step_user_assign(idx, serv_idx)
+                    user_trajs_assign[idx].append((obs_u, serv_idx, 0.0, 0.0, 0.0, gs, 0, 0, False))
+                total_timesteps += 1
+            elif isinstance(event, tuple) and len(event) == 3 and event[0] == 'server':
+                _, idx, phase = event
+                obs_s = env.get_server_obs(idx)
+                gs = env.get_obs_all()
+                if phase == 'start':
+                    act = np.random.uniform(agent_s.action_low, agent_s.action_high)
+                    act_d = int(round(act))
+                    env.step_server_start(idx, act_d)
+                    server_trajs[idx].append((obs_s, act_d, 0.0, 0.0, 0.0, gs, 0, 0, False))
+                elif phase == 'end':
+                    server_reward, u_rewards = env.step_server_end(idx)
+                    from utils import scale_rewards
+                    server_reward_norm, u_rewards_norm = scale_rewards(server_reward, u_rewards, 1)
+                    server_trajs[idx][-1] = server_trajs[idx][-1][:3] + (server_reward_norm,) + server_trajs[idx][-1][4:]
+                    for uid, reward in u_rewards_norm.items():
+                        for buffer_trajs in (user_trajs_assign[uid], user_trajs_wait[uid]):
+                            for i in reversed(range(len(buffer_trajs))):
+                                if buffer_trajs[i][3] == 0.0:
+                                    buffer_trajs[i] = buffer_trajs[i][:3] + (reward,) + buffer_trajs[i][4:]
+                                    break
+                total_timesteps += 1
+        
+        # 标记 done 和写入 buffer 的逻辑在随机填充和正式训练中是共用的
+        for i in range(env.num_users):
+            if user_trajs_wait[i]: user_trajs_wait[i][-1] = user_trajs_wait[i][-1][:-1] + (True,)
+            if user_trajs_assign[i]: user_trajs_assign[i][-1] = user_trajs_assign[i][-1][:-1] + (True,)
+        for i in range(env.num_servers):
+            if server_trajs[i]: server_trajs[i][-1] = server_trajs[i][-1][:-1] + (True,)
+        
+        for i in range(env.num_users):
+            ################################################
+            # 强制修改 wait time 用于调试
+            for j in range(len(user_trajs_wait[i])):
+                obs, _, logp, reward, val, gs, adv, ret, done = user_trajs_wait[i][j]
+                user_trajs_wait[i][j] = (obs, 10.0, logp, reward, val, gs, adv, ret, done)
+            ################################################
+            push_episode_to_buffer(user_trajs_wait[i], agent_u_wait)
+            push_episode_to_buffer(user_trajs_assign[i], agent_u_assign)
+        for i in range(env.num_servers):
+            push_episode_to_buffer(server_trajs[i], agent_s)
+
+    print("Replay buffer populated. Starting training...")
 
     outer_iter = 0
     while True:
@@ -148,15 +220,22 @@ def train_sac_with_log(env,
 
             # 写入 replay buffer
             for i in range(env.num_users):
+                ################################################
+                # 强制修改 wait time 用于调试
+                # for j in range(len(user_trajs_wait[i])):
+                #     obs, _, logp, reward, val, gs, adv, ret, done = user_trajs_wait[i][j]
+                #     user_trajs_wait[i][j] = (obs, 10.0, logp, reward, val, gs, adv, ret, done)
+                ################################################
                 push_episode_to_buffer(user_trajs_wait[i], agent_u_wait)
                 push_episode_to_buffer(user_trajs_assign[i], agent_u_assign)
             for i in range(env.num_servers):
                 push_episode_to_buffer(server_trajs[i], agent_s)
 
             # 训练 (按 experience 数量决定更新次数)
-            agent_u_wait.train(batch_size=train_batch_size, updates=len(user_trajs_wait) * updates_per_step)
-            agent_u_assign.train(batch_size=train_batch_size, updates=len(user_trajs_assign) * updates_per_step)
-            agent_s.train(batch_size=train_batch_size, updates=len(server_trajs) * updates_per_step)
+            if total_timesteps >= start_timesteps:
+                agent_u_wait.train(batch_size=train_batch_size, updates=len(user_trajs_wait) * updates_per_step)
+                agent_u_assign.train(batch_size=train_batch_size, updates=len(user_trajs_assign) * updates_per_step)
+                agent_s.train(batch_size=train_batch_size, updates=len(server_trajs) * updates_per_step)
 
             # 统计 reward
             train_r_user = sum([x[3] for buf in user_trajs_assign for x in buf])
@@ -241,6 +320,6 @@ if __name__ == "__main__":
                        reward_window=5,
                        lamda_tol=0.05,
                        max_outer_iter=20,
-                       epochs_per_lamda=50,
+                       epochs_per_lamda=100,
                        log_interval=1,
                        outdir="./trainlog/train_sac") 

@@ -238,5 +238,5 @@ if __name__ == "__main__":
 
     train_with_log(ENV, user_agent_wait, user_agent_assign, server_agent, lamda_init=10, reward_tol=5, reward_window=5,
                    lamda_tol=0.05,
-                   max_outer_iter=20, epochs_per_lamda=50, log_interval=1, outdir="./trainlog/train_2")
+                   max_outer_iter=20, epochs_per_lamda=100, log_interval=1, outdir="./trainlog/train_2")
     # plot_train_test_curves("./trainlog/train_history.csv")

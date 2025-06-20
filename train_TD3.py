@@ -68,9 +68,78 @@ def train_td3_with_log(env,
 
     batch_size = hyper.get('batch_size', 256)
     updates_per_step = hyper.get('updates_per_step', 1)
+    start_timesteps = hyper.get('start_timesteps', 10000)
 
     env.lamda = lamda_init
     alpha = 0.2
+    total_timesteps = 0
+    outer_iter = 0
+
+    print(f"Populating replay buffer with {start_timesteps} random steps...")
+    while total_timesteps < start_timesteps:
+        _ = env.reset()
+        user_trajs_wait = [[] for _ in range(env.num_users)]
+        user_trajs_assign = [[] for _ in range(env.num_users)]
+        server_trajs = [[] for _ in range(env.num_servers)]
+
+        while not env.is_done() and total_timesteps < start_timesteps:
+            event = env.get_next_event()
+            if event is None:
+                break
+            if event[0] == 'user':
+                _, idx, phase = event
+                obs_u = env.get_user_obs(idx)
+                gs = env.get_obs_all()
+                if phase == 'wait':
+                    w = np.random.uniform(agent_u_wait.action_low, agent_u_wait.action_high)
+                    env.step_user_wait(idx, w)
+                    user_trajs_wait[idx].append((obs_u, w, 0.0, 0.0, 0.0, gs, 0, 0, False))
+                else:  # assign
+                    act = np.random.uniform(agent_u_assign.action_low, agent_u_assign.action_high)
+                    serv_idx = env.decode_user_assign_action(int(round(act)))
+                    env.step_user_assign(idx, serv_idx)
+                    user_trajs_assign[idx].append((obs_u, serv_idx, 0.0, 0.0, 0.0, gs, 0, 0, False))
+                total_timesteps += 1
+            elif event[0] == 'server':
+                _, idx, phase = event
+                obs_s = env.get_server_obs(idx)
+                gs = env.get_obs_all()
+                if phase == 'start':
+                    act = np.random.uniform(agent_s.action_low, agent_s.action_high)
+                    act_d = int(round(act))
+                    env.step_server_start(idx, act_d)
+                    server_trajs[idx].append((obs_s, act_d, 0.0, 0.0, 0.0, gs, 0, 0, False))
+                else:  # end
+                    server_reward, u_rewards = env.step_server_end(idx)
+                    from utils import scale_rewards
+                    sr_norm, ur_norm = scale_rewards(server_reward, u_rewards, 1)
+                    server_trajs[idx][-1] = server_trajs[idx][-1][:3] + (sr_norm,) + server_trajs[idx][-1][4:]
+                    for uid, r in ur_norm.items():
+                        for cache in (user_trajs_assign[uid], user_trajs_wait[uid]):
+                            for i in reversed(range(len(cache))):
+                                if cache[i][3] == 0.0:
+                                    cache[i] = cache[i][:3] + (r,) + cache[i][4:]
+                                    break
+                total_timesteps += 1
+
+        for lst in (*user_trajs_wait, *user_trajs_assign, *server_trajs):
+            if lst:
+                lst[-1] = lst[-1][:-1] + (True,)
+        
+        for i in range(env.num_users):
+            ################################################
+            # 强制修改 wait time 用于调试
+            for j in range(len(user_trajs_wait[i])):
+                obs, _, logp, reward, val, gs, adv, ret, done = user_trajs_wait[i][j]
+                user_trajs_wait[i][j] = (obs, 10.0, logp, reward, val, gs, adv, ret, done)
+            ################################################
+            push_episode_to_buffer(user_trajs_wait[i], agent_u_wait)
+            push_episode_to_buffer(user_trajs_assign[i], agent_u_assign)
+        for i in range(env.num_servers):
+            push_episode_to_buffer(server_trajs[i], agent_s)
+
+    print("Replay buffer populated. Starting training...")
+
     outer_iter = 0
     while True:
         outer_iter += 1
@@ -135,9 +204,10 @@ def train_td3_with_log(env,
                 push_episode_to_buffer(server_trajs[i], agent_s)
 
             # 训练
-            agent_u_wait.train(batch_size=batch_size, updates=updates_per_step)
-            agent_u_assign.train(batch_size=batch_size, updates=updates_per_step)
-            agent_s.train(batch_size=batch_size, updates=updates_per_step)
+            if total_timesteps >= start_timesteps:
+                agent_u_wait.train(batch_size=batch_size, updates=updates_per_step)
+                agent_u_assign.train(batch_size=batch_size, updates=updates_per_step)
+                agent_s.train(batch_size=batch_size, updates=updates_per_step)
 
             train_r_user = sum(x[3] for buf in user_trajs_assign for x in buf)
             train_r_serv = sum(x[3] for buf in server_trajs for x in buf)
@@ -192,9 +262,22 @@ if __name__ == "__main__":
 
     ENV = EdgeBatchEnv(NUM_USERS, NUM_SERVERS, MAX_QUEUE, EPISODE_LIMIT, lamda=1)
 
-    user_agent_wait = MATD3Agent(obs_dim=USER_OBS_DIM, act_dim=1, global_dim=GS_DIM, action_low=1.0, action_high=MAX_WAITING_TIME)
-    user_agent_assign = MATD3Agent(obs_dim=USER_OBS_DIM, act_dim=1, global_dim=GS_DIM, action_low=0, action_high=ENV.user_assign_action_space() - 1)
-    server_agent = MATD3Agent(obs_dim=SVR_OBS_DIM, act_dim=1, global_dim=GS_DIM, action_low=0, action_high=ENV.server_action_space() - 1)
+    hyper = cfg.get('hyperparameters', {})
+    user_agent_wait = MATD3Agent(obs_dim=USER_OBS_DIM, act_dim=1, global_dim=GS_DIM,
+                                 action_low=1.0, action_high=MAX_WAITING_TIME,
+                                 expl_noise=hyper.get('expl_noise', 0.1),
+                                 policy_noise=hyper.get('policy_noise', 0.2),
+                                 noise_clip=hyper.get('noise_clip', 0.5))
+    user_agent_assign = MATD3Agent(obs_dim=USER_OBS_DIM, act_dim=1, global_dim=GS_DIM,
+                                   action_low=0, action_high=ENV.user_assign_action_space() - 1,
+                                   expl_noise=hyper.get('expl_noise', 0.1),
+                                   policy_noise=hyper.get('policy_noise', 0.2),
+                                   noise_clip=hyper.get('noise_clip', 0.5))
+    server_agent = MATD3Agent(obs_dim=SVR_OBS_DIM, act_dim=1, global_dim=GS_DIM,
+                              action_low=0, action_high=ENV.server_action_space() - 1,
+                              expl_noise=hyper.get('expl_noise', 0.1),
+                              policy_noise=hyper.get('policy_noise', 0.2),
+                              noise_clip=hyper.get('noise_clip', 0.5))
 
     train_td3_with_log(ENV, user_agent_wait, user_agent_assign, server_agent,
                        lamda_init=10, reward_tol=5, reward_window=5, lamda_tol=0.05,
