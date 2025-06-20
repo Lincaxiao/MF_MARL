@@ -18,13 +18,23 @@ def log_zeta(batch_size):
 
 
 def save_model(agent, path):
+    """根据 agent 类型保存参数。默认保存 actor；
+    若有 critic 保存 critic；若有 q1/q2 保存这两支 critic。"""
     torch.save(agent.actor.state_dict(), path + "_actor.pth")
-    torch.save(agent.critic.state_dict(), path + "_critic.pth")
+    if hasattr(agent, 'critic'):
+        torch.save(agent.critic.state_dict(), path + "_critic.pth")
+    elif hasattr(agent, 'q1') and hasattr(agent, 'q2'):
+        torch.save(agent.q1.state_dict(), path + "_q1.pth")
+        torch.save(agent.q2.state_dict(), path + "_q2.pth")
 
 
 def load_model(agent, path):
     agent.actor.load_state_dict(torch.load(path + "_actor.pth", map_location="cpu"))
-    agent.critic.load_state_dict(torch.load(path + "_critic.pth", map_location="cpu"))
+    if hasattr(agent, 'critic'):
+        agent.critic.load_state_dict(torch.load(path + "_critic.pth", map_location="cpu"))
+    elif hasattr(agent, 'q1') and hasattr(agent, 'q2'):
+        agent.q1.load_state_dict(torch.load(path + "_q1.pth", map_location="cpu"))
+        agent.q2.load_state_dict(torch.load(path + "_q2.pth", map_location="cpu"))
 
 
 def append_csv_row(filename, row, header=None):
@@ -337,4 +347,6 @@ def plot_aoi_and_user_reward_vs_epoch_smooth(train_history_csv, save_path, windo
 if __name__ == "__main__":
     # plot_train_test_curves("trainlog/checkpoint/1/train_history.csv", save_path='trainlog/checkpoint/1/train_test_curves.png')
     # plot_train_log_with_lamda("trainlog/checkpoint/2/train_history.csv", save_path='trainlog/checkpoint/2/train_test_curves.png')
-     plot_aoi_and_user_reward_vs_epoch_smooth("trainlog/train_8/train_history.csv", save_path='trainlog/train_8/')
+    plot_aoi_and_user_reward_vs_epoch_smooth("trainlog/train_2/train_history.csv", save_path='trainlog/train_2/')
+    plot_aoi_and_user_reward_vs_epoch_smooth("trainlog/train_sac/train_history.csv", save_path='trainlog/train_sac/')
+    plot_aoi_and_user_reward_vs_epoch_smooth("trainlog/train_td3/train_history.csv", save_path='trainlog/train_td3/')

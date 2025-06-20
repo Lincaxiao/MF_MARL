@@ -14,7 +14,8 @@ with open("config.yaml", "r") as f:
 # hyperparameters
 lr = config['hyperparameters']['learning_rate']
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = torch.device('cpu')
 print("Using device:", DEVICE)
 
 class Actor(nn.Module):
@@ -166,26 +167,33 @@ def compute_gae(traj, gamma=0.99, lam=0.95):
     return traj
 
 ############################################
-# 以下为 MASAC（多智能体 SAC）实现
+# MASAC
 ############################################
 
 class ReplayBuffer:
-    """简单的循环缓冲区，用于存储 S,A,R,S',done 五元组"""
-    def __init__(self, obs_dim, act_dim, capacity=100000):
+    """CTDE ReplayBuffer: 既保存各智能体局部观测，也保存全局观测，方便中心化 Critic 训练"""
+    def __init__(self, obs_dim, act_dim, global_dim, capacity=100000):
         self.capacity = capacity
         self.obs_buf = np.zeros((capacity, obs_dim), dtype=np.float32)
         self.next_obs_buf = np.zeros((capacity, obs_dim), dtype=np.float32)
         self.acts_buf = np.zeros((capacity, act_dim), dtype=np.float32)
         self.rews_buf = np.zeros((capacity, 1), dtype=np.float32)
         self.done_buf = np.zeros((capacity, 1), dtype=np.float32)
+        # 全局观测
+        self.global_obs_buf = np.zeros((capacity, global_dim), dtype=np.float32)
+        self.next_global_obs_buf = np.zeros((capacity, global_dim), dtype=np.float32)
         self.ptr, self.size = 0, 0
 
-    def push(self, obs, act, rew, next_obs, done):
+    def push(self, obs, act, rew, next_obs, done, global_obs, next_global_obs):
+        """写入一条经历（包含全局信息）"""
         self.obs_buf[self.ptr] = obs
-        self.acts_buf[self.ptr] = act
-        self.rews_buf[self.ptr] = rew
+        # 确保动作、奖励、done 具备正确形状
+        self.acts_buf[self.ptr] = np.asarray(act, dtype=np.float32)
+        self.rews_buf[self.ptr] = np.asarray(rew, dtype=np.float32)
         self.next_obs_buf[self.ptr] = next_obs
-        self.done_buf[self.ptr] = done
+        self.done_buf[self.ptr] = np.asarray(done, dtype=np.float32)
+        self.global_obs_buf[self.ptr] = global_obs
+        self.next_global_obs_buf[self.ptr] = next_global_obs
         self.ptr = (self.ptr + 1) % self.capacity
         self.size = min(self.size + 1, self.capacity)
 
@@ -195,7 +203,9 @@ class ReplayBuffer:
                      acts=self.acts_buf[idxs],
                      rews=self.rews_buf[idxs],
                      next_obs=self.next_obs_buf[idxs],
-                     done=self.done_buf[idxs])
+                     done=self.done_buf[idxs],
+                     global_obs=self.global_obs_buf[idxs],
+                     next_global_obs=self.next_global_obs_buf[idxs])
         # 转成 torch 张量
         for k in batch:
             batch[k] = torch.tensor(batch[k], dtype=torch.float32, device=DEVICE)
@@ -223,8 +233,8 @@ class QNetwork(nn.Module):
 
 
 class MASACAgent:
-    """多智能体 Soft Actor-Critic（这里实现为单智能体接口，可在多智能体框架中实例化多个）"""
-    def __init__(self, obs_dim, act_dim, action_low=-1.0, action_high=1.0,
+    """多智能体 Soft Actor-Critic"""
+    def __init__(self, obs_dim, act_dim, global_dim, action_low=-1.0, action_high=1.0,
                  lr=lr, gamma=0.99, tau=0.005, alpha=0.2,
                  automatic_entropy_tuning=True,
                  buffer_size=1_000_000, hidden_dim=256):
@@ -240,11 +250,11 @@ class MASACAgent:
         # Actor
         self.actor = GaussianActor(obs_dim, action_low, action_high, hidden_dim).to(DEVICE)
         # Critic
-        self.q1 = QNetwork(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
-        self.q2 = QNetwork(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
+        self.q1 = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
+        self.q2 = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
         # Target Critic
-        self.q1_target = QNetwork(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
-        self.q2_target = QNetwork(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
+        self.q1_target = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
+        self.q2_target = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
         self.q1_target.load_state_dict(self.q1.state_dict())
         self.q2_target.load_state_dict(self.q2.state_dict())
         self.q1_target.eval()
@@ -263,12 +273,13 @@ class MASACAgent:
         else:
             self.alpha = alpha
 
-        # Replay Buffer
-        self.replay_buffer = ReplayBuffer(obs_dim, self.act_dim, capacity=buffer_size)
+        # Replay Buffer（CTDE，需要 global_dim）
+        assert 'global_dim' in locals() or 'global_dim' in globals(), "需提供 global_dim"
+        self.replay_buffer = ReplayBuffer(obs_dim, self.act_dim, global_dim, capacity=buffer_size)
 
     @torch.no_grad()
     def select(self, obs, evaluate=False):
-        """与 PPO 接口保持一致，返回动作和 log_prob（评估时可忽略）"""
+        """与 PPO 接口保持一致，返回动作和 log_prob"""
         obs_tensor = torch.tensor(obs, dtype=torch.float32, device=DEVICE).unsqueeze(0)
         if evaluate:
             mu, _ = self.actor.forward(obs_tensor)
@@ -279,8 +290,9 @@ class MASACAgent:
         action = action.clamp(self.action_low, self.action_high)
         return float(action.cpu().item()), float(log_prob.cpu().item())
 
-    def store(self, obs, act, reward, next_obs, done):
-        self.replay_buffer.push(obs, [act], [reward], next_obs, [done])
+    def store(self, obs, act, reward, next_obs, done, global_obs, next_global_obs):
+        """写入含全局信息的数据"""
+        self.replay_buffer.push(obs, act, reward, next_obs, done, global_obs, next_global_obs)
 
     def soft_update(self, net, target_net):
         for param, target_param in zip(net.parameters(), target_net.parameters()):
@@ -292,6 +304,7 @@ class MASACAgent:
         for _ in range(updates):
             batch = self.replay_buffer.sample(batch_size)
             obs, actions, rewards, next_obs, dones = batch['obs'], batch['acts'], batch['rews'], batch['next_obs'], batch['done']
+            glob_obs, glob_next_obs = batch['global_obs'], batch['next_global_obs']
 
             # 转换 actions 形状 [B, act_dim]
             actions = actions.view(-1, self.act_dim)
@@ -300,14 +313,14 @@ class MASACAgent:
             with torch.no_grad():
                 next_action, next_log_prob, _, _ = self.actor.sample(next_obs)
                 next_action = next_action.view(-1, self.act_dim)
-                target_q1 = self.q1_target(next_obs, next_action)
-                target_q2 = self.q2_target(next_obs, next_action)
+                target_q1 = self.q1_target(glob_next_obs, next_action)
+                target_q2 = self.q2_target(glob_next_obs, next_action)
                 target_q_min = torch.min(target_q1, target_q2) - self.alpha * next_log_prob
                 target_q = rewards + (1 - dones) * self.gamma * target_q_min.unsqueeze(-1)
                 target_q = target_q.squeeze(-1)
 
-            current_q1 = self.q1(obs, actions)
-            current_q2 = self.q2(obs, actions)
+            current_q1 = self.q1(glob_obs, actions)
+            current_q2 = self.q2(glob_obs, actions)
             q1_loss = F.mse_loss(current_q1, target_q)
             q2_loss = F.mse_loss(current_q2, target_q)
 
@@ -322,8 +335,8 @@ class MASACAgent:
             # ----------------------- 更新 Actor 网络 -----------------------
             new_actions, log_prob, _, _ = self.actor.sample(obs)
             new_actions = new_actions.view(-1, self.act_dim)
-            q1_new = self.q1(obs, new_actions)
-            q2_new = self.q2(obs, new_actions)
+            q1_new = self.q1(glob_obs, new_actions)
+            q2_new = self.q2(glob_obs, new_actions)
             q_new = torch.min(q1_new, q2_new)
             actor_loss = (self.alpha * log_prob - q_new).mean()
 
@@ -354,7 +367,7 @@ class MASACAgent:
         return value.cpu().item()
 
 ################################################
-# 以下为 MATD3（多智能体 TD3）实现
+# TD3
 ################################################
 
 class DeterministicActor(nn.Module):
@@ -380,8 +393,8 @@ class DeterministicActor(nn.Module):
 
 
 class MATD3Agent:
-    """多智能体 TD3，实现接口与 MASAC/MAPPO 一致"""
-    def __init__(self, obs_dim, act_dim, action_low=-1.0, action_high=1.0,
+    """TD3"""
+    def __init__(self, obs_dim, act_dim, global_dim, action_low=-1.0, action_high=1.0,
                  lr=lr, gamma=0.99, tau=0.005,
                  policy_noise=0.2, noise_clip=0.5, policy_delay=2,
                  buffer_size=1_000_000, hidden_dim=256):
@@ -400,10 +413,10 @@ class MATD3Agent:
         self.actor_target = DeterministicActor(obs_dim, self.act_dim, action_low, action_high, hidden_dim).to(DEVICE)
         self.actor_target.load_state_dict(self.actor.state_dict())
 
-        self.q1 = QNetwork(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
-        self.q2 = QNetwork(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
-        self.q1_target = QNetwork(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
-        self.q2_target = QNetwork(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
+        self.q1 = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
+        self.q2 = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
+        self.q1_target = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
+        self.q2_target = QNetwork(global_dim, self.act_dim, hidden_dim).to(DEVICE)
         self.q1_target.load_state_dict(self.q1.state_dict())
         self.q2_target.load_state_dict(self.q2.state_dict())
 
@@ -412,8 +425,9 @@ class MATD3Agent:
         self.q1_optimizer = optim.Adam(self.q1.parameters(), lr=lr)
         self.q2_optimizer = optim.Adam(self.q2.parameters(), lr=lr)
 
-        # Replay Buffer
-        self.replay_buffer = ReplayBuffer(obs_dim, self.act_dim, capacity=buffer_size)
+        # Replay Buffer（CTDE，需要 global_dim）
+        assert 'global_dim' in locals() or 'global_dim' in globals(), "需提供 global_dim"
+        self.replay_buffer = ReplayBuffer(obs_dim, self.act_dim, global_dim, capacity=buffer_size)
 
         self.total_it = 0  # 用于延迟策略更新
 
@@ -428,8 +442,9 @@ class MATD3Agent:
         # 为兼容性，返回 log_prob=0
         return float(action.cpu().item()), 0.0
 
-    def store(self, obs, act, reward, next_obs, done):
-        self.replay_buffer.push(obs, [act], [reward], next_obs, [done])
+    def store(self, obs, act, reward, next_obs, done, global_obs, next_global_obs):
+        """写入含全局信息的数据"""
+        self.replay_buffer.push(obs, act, reward, next_obs, done, global_obs, next_global_obs)
 
     def soft_update(self, net, target_net):
         for param, target_param in zip(net.parameters(), target_net.parameters()):
@@ -442,20 +457,21 @@ class MATD3Agent:
             self.total_it += 1
             batch = self.replay_buffer.sample(batch_size)
             obs, actions, rewards, next_obs, dones = batch['obs'], batch['acts'], batch['rews'], batch['next_obs'], batch['done']
+            glob_obs, glob_next_obs = batch['global_obs'], batch['next_global_obs']
             actions = actions.view(-1, self.act_dim)
 
             # 生成带噪声的下一个动作（目标策略平滑）
             with torch.no_grad():
                 noise = (torch.randn_like(actions) * self.policy_noise).clamp(-self.noise_clip, self.noise_clip)
                 next_action = (self.actor_target(next_obs) + noise).clamp(self.action_low, self.action_high)
-                target_q1 = self.q1_target(next_obs, next_action)
-                target_q2 = self.q2_target(next_obs, next_action)
+                target_q1 = self.q1_target(glob_next_obs, next_action)
+                target_q2 = self.q2_target(glob_next_obs, next_action)
                 target_q = rewards + (1 - dones) * self.gamma * torch.min(target_q1, target_q2).unsqueeze(-1)
                 target_q = target_q.squeeze(-1)
 
             # 更新 Critic
-            current_q1 = self.q1(obs, actions)
-            current_q2 = self.q2(obs, actions)
+            current_q1 = self.q1(glob_obs, actions)
+            current_q2 = self.q2(glob_obs, actions)
             q1_loss = F.mse_loss(current_q1, target_q)
             q2_loss = F.mse_loss(current_q2, target_q)
 
@@ -470,7 +486,7 @@ class MATD3Agent:
             # 延迟策略更新
             if self.total_it % self.policy_delay == 0:
                 actor_actions = self.actor(obs)
-                actor_loss = -self.q1(obs, actor_actions).mean()
+                actor_loss = -self.q1(glob_obs, actor_actions).mean()
 
                 self.actor_optimizer.zero_grad()
                 actor_loss.backward()
