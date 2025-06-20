@@ -1,0 +1,10 @@
+# Ignore python cache
+__pycache__/
+
+# Ignore training logs
+trainlog/
+
+# Ignore all markdown files
+*.md
+# But do not ignore Architect.md
+!Architect.md
