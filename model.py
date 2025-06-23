@@ -18,6 +18,16 @@ lr = config['hyperparameters']['learning_rate']
 DEVICE = torch.device('cpu')
 print("Using device:", DEVICE)
 
+# --------------------------------------------------
+# 权重初始化函数（Orthogonal + ReLU 增益）
+# --------------------------------------------------
+
+def init_weights(m):
+    """对 Linear 层做 Orthogonal 初始化并将 bias 置 0."""
+    if isinstance(m, nn.Linear):
+        nn.init.orthogonal_(m.weight, gain=nn.init.calculate_gain('relu'))
+        nn.init.constant_(m.bias, 0.0)
+
 class Actor(nn.Module):
     def __init__(self, obs_dim, act_dim, hidden_dim=256):
         super().__init__()
@@ -28,6 +38,10 @@ class Actor(nn.Module):
             nn.ReLU()
         )
         self.out = nn.Linear(hidden_dim, act_dim)
+        # 权重初始化
+        self.apply(init_weights)
+        nn.init.uniform_(self.out.weight, -3e-3, 3e-3)
+        nn.init.constant_(self.out.bias, 0.0)
 
     def forward(self, x):  # [B, obs_dim]
         return self.out(self.fc(x))
@@ -39,6 +53,10 @@ class Critic(nn.Module):
         self.fc1 = nn.Linear(global_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, 1)
+        # 权重初始化
+        self.apply(init_weights)
+        nn.init.uniform_(self.fc3.weight, -3e-3, 3e-3)
+        nn.init.constant_(self.fc3.bias, 0.0)
 
     def forward(self, obs):
         x = F.relu(self.fc1(obs))
@@ -57,9 +75,14 @@ class GaussianActor(nn.Module):
             nn.ReLU()
         )
         self.mu_head = nn.Linear(hidden_dim, 1)
-        self.log_std = nn.Parameter(torch.zeros(1))
+        # self.log_std = nn.Parameter(torch.zeros(1))  # 原始初始化方式
+        self.log_std = nn.Parameter(torch.ones(1) * -0.5)  # 更小的初始 std
         self.action_low = action_low
         self.action_high = action_high
+        # 权重初始化
+        self.apply(init_weights)
+        nn.init.uniform_(self.mu_head.weight, -3e-3, 3e-3)
+        nn.init.constant_(self.mu_head.bias, 0.0)
 
     def forward(self, x):
         x = self.fc(x)
@@ -67,39 +90,39 @@ class GaussianActor(nn.Module):
         std = torch.exp(self.log_std)
         return mu, std
 
-    # def sample(self, x):
-    #     mu, std = self.forward(x)
-    #     dist = torch.distributions.Normal(mu, std)
-    #     action = dist.rsample()
-    #     action_clipped = torch.clamp(action, self.action_low, self.action_high)
-    #     log_prob = dist.log_prob(action)
-    #     return action_clipped.squeeze(-1), log_prob.squeeze(-1), mu.squeeze(-1), std.squeeze(-1)
     def sample(self, x):
-        # 原先的 mu/std 计算不变
         mu, std = self.forward(x)
         dist = torch.distributions.Normal(mu, std)
+        action = dist.rsample()
+        action_clipped = torch.clamp(action, self.action_low, self.action_high)
+        log_prob = dist.log_prob(action)
+        return action_clipped.squeeze(-1), log_prob.squeeze(-1), mu.squeeze(-1), std.squeeze(-1)
+    # def sample(self, x):
+    #     # 原先的 mu/std 计算不变
+    #     mu, std = self.forward(x)
+    #     dist = torch.distributions.Normal(mu, std)
 
-        # re-param 采样
-        z = dist.rsample()                     # raw action
-        log_prob_z = dist.log_prob(z)          # 对应的 log prob
+    #     # re-param 采样
+    #     z = dist.rsample()                     # raw action
+    #     log_prob_z = dist.log_prob(z)          # 对应的 log prob
 
-        # squash 到 (-1,1)
-        y = torch.tanh(z)
+    #     # squash 到 (-1,1)
+    #     y = torch.tanh(z)
 
-        # Jacobian 校正：logp = logπ(z) - ∑ log(1 - tanh(z)^2)
-        log_prob = log_prob_z - torch.log(1 - y.pow(2) + 1e-6)
-        log_prob = log_prob.sum(dim=-1, keepdim=True)
+    #     # Jacobian 校正：logp = logπ(z) - ∑ log(1 - tanh(z)^2)
+    #     log_prob = log_prob_z - torch.log(1 - y.pow(2) + 1e-6)
+    #     log_prob = log_prob.sum(dim=-1, keepdim=True)
 
-        # 线性映射到 [low, high]
-        action = self.action_low + (y + 1) * 0.5 * (self.action_high - self.action_low)
+    #     # 线性映射到 [low, high]
+    #     action = self.action_low + (y + 1) * 0.5 * (self.action_high - self.action_low)
 
-        # 保持原来 squeeze 行为
-        return (
-            action.squeeze(-1),
-            log_prob.squeeze(-1),
-            mu.squeeze(-1),
-            std.squeeze(-1),
-        )
+    #     # 保持原来 squeeze 行为
+    #     return (
+    #         action.squeeze(-1),
+    #         log_prob.squeeze(-1),
+    #         mu.squeeze(-1),
+    #         std.squeeze(-1),
+    #     )
 
 
 class SACGaussianActor(nn.Module):
@@ -114,6 +137,12 @@ class SACGaussianActor(nn.Module):
         )
         self.mu_layer = nn.Linear(hidden_dim, act_dim)
         self.log_std_layer = nn.Linear(hidden_dim, act_dim)
+        # 权重初始化
+        self.apply(init_weights)
+        nn.init.uniform_(self.mu_layer.weight, -3e-3, 3e-3)
+        nn.init.constant_(self.mu_layer.bias, 0.0)
+        nn.init.uniform_(self.log_std_layer.weight, -3e-3, 3e-3)
+        nn.init.constant_(self.log_std_layer.bias, -0.5)
 
     def forward(self, obs, deterministic=False, with_logprob=True):
         net_out = self.net(obs)
@@ -238,7 +267,7 @@ def compute_gae(traj, gamma=0.99, lam=0.95):
 
 class ReplayBuffer:
     """CTDE ReplayBuffer: 既保存各智能体局部观测，也保存全局观测，方便中心化 Critic 训练"""
-    def __init__(self, obs_dim, act_dim, global_dim, capacity=100000):
+    def __init__(self, obs_dim, act_dim, global_dim, capacity=500000):
         self.capacity = capacity
         self.obs_buf = np.zeros((capacity, obs_dim), dtype=np.float32)
         self.next_obs_buf = np.zeros((capacity, obs_dim), dtype=np.float32)
@@ -292,6 +321,10 @@ class QNetwork(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_dim, 1)
         )
+        # 权重初始化
+        self.apply(init_weights)
+        nn.init.uniform_(self.net[-1].weight, -3e-3, 3e-3)
+        nn.init.constant_(self.net[-1].bias, 0.0)
 
     def forward(self, obs, act):
         x = torch.cat([obs, act], dim=-1)
@@ -449,6 +482,10 @@ class DeterministicActor(nn.Module):
             nn.Linear(hidden_dim, act_dim),
             nn.Tanh()  # 输出范围 [-1, 1]
         )
+        # 权重初始化
+        self.apply(init_weights)
+        nn.init.uniform_(self.net[-2].weight, -3e-3, 3e-3)  # Linear 层在倒数第2位
+        nn.init.constant_(self.net[-2].bias, 0.0)
 
     def forward(self, obs):
         # 输出范围 [-1,1]
@@ -471,6 +508,10 @@ class MATD3Agent:
         self.policy_noise = policy_noise
         self.noise_clip = noise_clip
         self.policy_delay = policy_delay
+        
+        self.action_scale = (self.action_high - self.action_low) / 2.0
+        self.action_bias = (self.action_high + self.action_low) / 2.0
+
 
         # Actor & Critics
         self.actor = DeterministicActor(obs_dim, self.act_dim, hidden_dim).to(DEVICE)
@@ -498,19 +539,18 @@ class MATD3Agent:
     @torch.no_grad()
     def select(self, obs, evaluate=False):
         obs_tensor = torch.tensor(obs, dtype=torch.float32, device=DEVICE).unsqueeze(0)
-        mu = self.actor(obs_tensor)
+        mu_tanh = self.actor(obs_tensor) # actor输出的是tanh后的值
+        
+        # 将tanh后的动作缩放到实际环境范围
+        mu_scaled = mu_tanh * self.action_scale + self.action_bias
 
         if not evaluate:
-            # 添加探索噪声
-            noise = torch.randn_like(mu) * self.expl_noise
-            mu = mu + noise
-        
-        # 将动作从 [-1, 1] 缩放到 [action_low, action_high]
-        # 注意：这里假设 actor 输出已经是 tanh 压缩过的
-        scaled_action = self.action_low + (mu + 1) * 0.5 * (self.action_high - self.action_low)
+            # 在真实的动作空间添加噪声
+            noise = torch.normal(0, self.action_scale * self.expl_noise, size=mu_scaled.shape, device=DEVICE)
+            mu_scaled += noise
         
         # 裁剪到有效范围
-        action_clipped = torch.clamp(scaled_action, self.action_low, self.action_high)
+        action_clipped = torch.clamp(mu_scaled, self.action_low, self.action_high)
         
         # 确定性策略没有 log_prob，返回 0.0 占位
         return float(action_clipped.cpu().item()), 0.0
@@ -533,44 +573,48 @@ class MATD3Agent:
             obs, actions, rewards, next_obs, dones = batch['obs'], batch['acts'], batch['rews'], batch['next_obs'], batch['done']
             glob_obs, glob_next_obs = batch['global_obs'], batch['next_global_obs']
             actions = actions.view(-1, self.act_dim)
+            rewards = rewards.squeeze(-1) # 保证形状为 [B]
+            dones = dones.squeeze(-1) # 保证形状为 [B]
 
             # --- 目标 Q 值计算 ---
             with torch.no_grad():
-                # 目标策略平滑: 对目标 actor 的输出添加噪声
-                next_action_tanh = self.actor_target(next_obs)
-                noise = (torch.randn_like(next_action_tanh) * self.policy_noise).clamp(-self.noise_clip, self.noise_clip)
-                next_action_tanh_noisy = next_action_tanh + noise
+                # ***** 已修正: 目标策略平滑 (与 CleanRL 对齐的最优实现) *****
+                # 1. 从目标 actor 获取 [-1, 1] 范围的动作，并立刻映射到真实动作空间
+                next_action_scaled = self.actor_target(next_obs) * self.action_scale + self.action_bias
                 
-                # 将加噪后的动作从 [-1, 1] 缩放并裁剪到环境范围
-                next_action_scaled = self.action_low + (next_action_tanh_noisy + 1) * 0.5 * (self.action_high - self.action_low)
-                next_action_clipped = torch.clamp(next_action_scaled, self.action_low, self.action_high)
+                # 2. 生成噪声，其尺度与真实动作空间匹配，并进行裁剪
+                # 注意：policy_noise 和 noise_clip 是为归一化动作空间设计的超参
+                noise = (
+                    torch.randn_like(next_action_scaled) * self.policy_noise * self.action_scale
+                ).clamp(-self.noise_clip * self.action_scale, self.noise_clip * self.action_scale)
+                
+                # 3. 在真实动作空间中添加噪声，并进行最终裁剪
+                next_action_clipped = torch.clamp(next_action_scaled + noise, self.action_low, self.action_high)
 
-                # 计算目标 Q 值
+                # 4. 计算目标 Q 值
                 target_q1 = self.q1_target(glob_next_obs, next_action_clipped)
                 target_q2 = self.q2_target(glob_next_obs, next_action_clipped)
-                target_q = rewards + (1 - dones) * self.gamma * torch.min(target_q1, target_q2).unsqueeze(-1)
-                target_q = target_q.squeeze(-1)
-
+                min_target_q = torch.min(target_q1, target_q2)
+                target_q = rewards + (1 - dones) * self.gamma * min_target_q
+                
             # --- Critic 更新 ---
             current_q1 = self.q1(glob_obs, actions)
             current_q2 = self.q2(glob_obs, actions)
             q1_loss = F.mse_loss(current_q1, target_q)
             q2_loss = F.mse_loss(current_q2, target_q)
+            q_loss = q1_loss + q2_loss
 
             self.q1_optimizer.zero_grad()
-            q1_loss.backward()
-            self.q1_optimizer.step()
-
             self.q2_optimizer.zero_grad()
-            q2_loss.backward()
+            q_loss.backward()
+            self.q1_optimizer.step()
             self.q2_optimizer.step()
 
             # --- 延迟策略更新 ---
             if self.total_it % self.policy_delay == 0:
                 # Actor 损失计算
-                # 注意：这里的 self.actor(obs) 是确定性动作，没有加探索噪声
                 actor_actions_tanh = self.actor(obs)
-                actor_actions_scaled = self.action_low + (actor_actions_tanh + 1) * 0.5 * (self.action_high - self.action_low)
+                actor_actions_scaled = actor_actions_tanh * self.action_scale + self.action_bias
                 actor_loss = -self.q1(glob_obs, actor_actions_scaled).mean()
 
                 # Actor 更新
@@ -588,7 +632,9 @@ class MATD3Agent:
         obs_tensor = torch.tensor(obs, dtype=torch.float32, device=DEVICE).unsqueeze(0)
         with torch.no_grad():
             act_tanh = self.actor(obs_tensor)
-            act_scaled = self.action_low + (act_tanh + 1) * 0.5 * (self.action_high - self.action_low)
+            act_scaled = act_tanh * self.action_scale + self.action_bias
+            # 注意：这里的 global_obs 在单智能体场景下就是 obs
+            # 在多智能体下，这里可能需要传入 global_obs
             value = self.q1(obs_tensor, act_scaled)
         return value.cpu().item()
 

@@ -79,7 +79,7 @@ def train_sac_with_log(env,
     gamma = hyperparams.get('gamma', 0.99)
     lam = hyperparams.get('lam', 0.95)  # SAC 不用，但保留
     updates_per_step = hyperparams.get('updates_per_step', 1)
-    start_timesteps = hyperparams.get('start_timesteps', 1_000_000)
+    start_timesteps = hyperparams.get('start_timesteps', 500000)
 
     env.lamda = lamda_init
     alpha = 0.2  # lamda 更新系数
@@ -144,9 +144,9 @@ def train_sac_with_log(env,
         for i in range(env.num_users):
             ################################################
             # 强制修改 wait time 用于调试
-            for j in range(len(user_trajs_wait[i])):
-                obs, _, logp, reward, val, gs, adv, ret, done = user_trajs_wait[i][j]
-                user_trajs_wait[i][j] = (obs, 10.0, logp, reward, val, gs, adv, ret, done)
+            # for j in range(len(user_trajs_wait[i])):
+            #     obs, _, logp, reward, val, gs, adv, ret, done = user_trajs_wait[i][j]
+            #     user_trajs_wait[i][j] = (obs, 10.0, logp, reward, val, gs, adv, ret, done)
             ################################################
             push_episode_to_buffer(user_trajs_wait[i], agent_u_wait)
             push_episode_to_buffer(user_trajs_assign[i], agent_u_assign)
@@ -319,7 +319,7 @@ if __name__ == "__main__":
                        reward_tol=5,
                        reward_window=5,
                        lamda_tol=0.05,
-                       max_outer_iter=20,
+                       max_outer_iter=30,
                        epochs_per_lamda=100,
                        log_interval=1,
                        outdir="./trainlog/train_sac") 

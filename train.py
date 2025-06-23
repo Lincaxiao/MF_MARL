@@ -175,7 +175,8 @@ def train_with_log(env, agent_u_wait, agent_u_assign, agent_s, lamda_init=1.0, r
                 # test_r_u, test_r_s, test_mean_aoi = run_test_log(env, agent_u_wait, agent_u_assign, agent_s, repeat=5)
                 from utils import evaluate_aoi
                 aoi_per_user, train_mean_aoi = evaluate_aoi(env.completed_tasks, env.t, env.num_users)
-                append_csv_row(train_logfile, [ep, train_r_user, train_r_serv, train_mean_aoi, env.lamda],
+                append_csv_row(train_logfile,
+                               [ep, train_r_user, train_r_serv, 0, 0, train_mean_aoi, env.lamda],
                                header if ep == 1 else None)
                 print(
                     f"E{ep} | TrainU={train_r_user / env.num_users:.2f} TrainS={train_r_serv:.2f} MeanAoI={train_mean_aoi:.4f} Lamda={env.lamda:.4f}")
@@ -238,5 +239,5 @@ if __name__ == "__main__":
 
     train_with_log(ENV, user_agent_wait, user_agent_assign, server_agent, lamda_init=10, reward_tol=5, reward_window=5,
                    lamda_tol=0.05,
-                   max_outer_iter=20, epochs_per_lamda=100, log_interval=1, outdir="./trainlog/train_2")
+                   max_outer_iter=80, epochs_per_lamda=100, log_interval=1, outdir="./trainlog/train_2")
     # plot_train_test_curves("./trainlog/train_history.csv")

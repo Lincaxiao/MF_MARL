@@ -348,5 +348,5 @@ if __name__ == "__main__":
     # plot_train_test_curves("trainlog/train_2/train_history.csv", save_path='trainlog/train_2/train_test_curves.png')
     # plot_train_log_with_lamda("trainlog/train_2/train_history.csv", save_path='trainlog/train_2/train_test_curves.png')
     plot_aoi_and_user_reward_vs_epoch_smooth("trainlog/train_2/train_history.csv", save_path='trainlog/train_2/')
-    plot_aoi_and_user_reward_vs_epoch_smooth("trainlog/train_sac/train_history.csv", save_path='trainlog/train_sac/')
-    plot_aoi_and_user_reward_vs_epoch_smooth("trainlog/train_td3/train_history.csv", save_path='trainlog/train_td3/')
+    # plot_aoi_and_user_reward_vs_epoch_smooth("trainlog/train_sac/train_history.csv", save_path='trainlog/train_sac/')
+    # plot_aoi_and_user_reward_vs_epoch_smooth("trainlog/train_td3/train_history.csv", save_path='trainlog/train_td3/')

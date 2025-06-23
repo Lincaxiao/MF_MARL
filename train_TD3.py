@@ -68,7 +68,7 @@ def train_td3_with_log(env,
 
     batch_size = hyper.get('batch_size', 256)
     updates_per_step = hyper.get('updates_per_step', 1)
-    start_timesteps = hyper.get('start_timesteps', 10000)
+    start_timesteps = hyper.get('start_timesteps', 500000)
 
     env.lamda = lamda_init
     alpha = 0.2
@@ -129,9 +129,9 @@ def train_td3_with_log(env,
         for i in range(env.num_users):
             ################################################
             # 强制修改 wait time 用于调试
-            for j in range(len(user_trajs_wait[i])):
-                obs, _, logp, reward, val, gs, adv, ret, done = user_trajs_wait[i][j]
-                user_trajs_wait[i][j] = (obs, 10.0, logp, reward, val, gs, adv, ret, done)
+            # for j in range(len(user_trajs_wait[i])):
+            #     obs, _, logp, reward, val, gs, adv, ret, done = user_trajs_wait[i][j]
+            #     user_trajs_wait[i][j] = (obs, 10.0, logp, reward, val, gs, adv, ret, done)
             ################################################
             push_episode_to_buffer(user_trajs_wait[i], agent_u_wait)
             push_episode_to_buffer(user_trajs_assign[i], agent_u_assign)
@@ -267,19 +267,19 @@ if __name__ == "__main__":
                                  action_low=1.0, action_high=MAX_WAITING_TIME,
                                  expl_noise=hyper.get('expl_noise', 0.1),
                                  policy_noise=hyper.get('policy_noise', 0.2),
-                                 noise_clip=hyper.get('noise_clip', 0.5))
+                                 noise_clip=hyper.get('noise_clip', 0.3))
     user_agent_assign = MATD3Agent(obs_dim=USER_OBS_DIM, act_dim=1, global_dim=GS_DIM,
                                    action_low=0, action_high=ENV.user_assign_action_space() - 1,
                                    expl_noise=hyper.get('expl_noise', 0.1),
                                    policy_noise=hyper.get('policy_noise', 0.2),
-                                   noise_clip=hyper.get('noise_clip', 0.5))
+                                   noise_clip=hyper.get('noise_clip', 0.3))
     server_agent = MATD3Agent(obs_dim=SVR_OBS_DIM, act_dim=1, global_dim=GS_DIM,
                               action_low=0, action_high=ENV.server_action_space() - 1,
                               expl_noise=hyper.get('expl_noise', 0.1),
                               policy_noise=hyper.get('policy_noise', 0.2),
-                              noise_clip=hyper.get('noise_clip', 0.5))
+                              noise_clip=hyper.get('noise_clip', 0.3))
 
     train_td3_with_log(ENV, user_agent_wait, user_agent_assign, server_agent,
                        lamda_init=10, reward_tol=5, reward_window=5, lamda_tol=0.05,
-                       max_outer_iter=20, epochs_per_lamda=50, log_interval=1,
+                       max_outer_iter=30, epochs_per_lamda=100, log_interval=1,
                        outdir="./trainlog/train_td3") 
