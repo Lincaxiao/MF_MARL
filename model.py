@@ -29,7 +29,7 @@ def init_weights(m):
         nn.init.constant_(m.bias, 0.0)
 
 class Actor(nn.Module):
-    def __init__(self, obs_dim, act_dim, hidden_dim=256):
+    def __init__(self, obs_dim, act_dim, hidden_dim=128):
         super().__init__()
         self.fc = nn.Sequential(
             nn.Linear(obs_dim, hidden_dim),
@@ -48,7 +48,7 @@ class Actor(nn.Module):
 
 
 class Critic(nn.Module):
-    def __init__(self, global_dim, hidden_dim=256):
+    def __init__(self, global_dim, hidden_dim=128):
         super(Critic, self).__init__()
         self.fc1 = nn.Linear(global_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
@@ -66,7 +66,7 @@ class Critic(nn.Module):
 
 
 class GaussianActor(nn.Module):
-    def __init__(self, obs_dim, action_low, action_high, hidden_dim=256):
+    def __init__(self, obs_dim, action_low, action_high, hidden_dim=128):
         super().__init__()
         self.fc = nn.Sequential(
             nn.Linear(obs_dim, hidden_dim),
@@ -90,44 +90,44 @@ class GaussianActor(nn.Module):
         std = torch.exp(self.log_std)
         return mu, std
 
-    def sample(self, x):
-        mu, std = self.forward(x)
-        dist = torch.distributions.Normal(mu, std)
-        action = dist.rsample()
-        action_clipped = torch.clamp(action, self.action_low, self.action_high)
-        log_prob = dist.log_prob(action)
-        return action_clipped.squeeze(-1), log_prob.squeeze(-1), mu.squeeze(-1), std.squeeze(-1)
     # def sample(self, x):
-    #     # 原先的 mu/std 计算不变
     #     mu, std = self.forward(x)
     #     dist = torch.distributions.Normal(mu, std)
+    #     action = dist.rsample()
+    #     action_clipped = torch.clamp(action, self.action_low, self.action_high)
+    #     log_prob = dist.log_prob(action)
+    #     return action_clipped.squeeze(-1), log_prob.squeeze(-1), mu.squeeze(-1), std.squeeze(-1)
+    def sample(self, x):
+        # 原先的 mu/std 计算不变
+        mu, std = self.forward(x)
+        dist = torch.distributions.Normal(mu, std)
 
-    #     # re-param 采样
-    #     z = dist.rsample()                     # raw action
-    #     log_prob_z = dist.log_prob(z)          # 对应的 log prob
+        # re-param 采样
+        z = dist.rsample()                     # raw action
+        log_prob_z = dist.log_prob(z)          # 对应的 log prob
 
-    #     # squash 到 (-1,1)
-    #     y = torch.tanh(z)
+        # squash 到 (-1,1)
+        y = torch.tanh(z)
 
-    #     # Jacobian 校正：logp = logπ(z) - ∑ log(1 - tanh(z)^2)
-    #     log_prob = log_prob_z - torch.log(1 - y.pow(2) + 1e-6)
-    #     log_prob = log_prob.sum(dim=-1, keepdim=True)
+        # Jacobian 校正：logp = logπ(z) - ∑ log(1 - tanh(z)^2)
+        log_prob = log_prob_z - torch.log(1 - y.pow(2) + 1e-6)
+        log_prob = log_prob.sum(dim=-1, keepdim=True)
 
-    #     # 线性映射到 [low, high]
-    #     action = self.action_low + (y + 1) * 0.5 * (self.action_high - self.action_low)
+        # 线性映射到 [low, high]
+        action = self.action_low + (y + 1) * 0.5 * (self.action_high - self.action_low)
 
-    #     # 保持原来 squeeze 行为
-    #     return (
-    #         action.squeeze(-1),
-    #         log_prob.squeeze(-1),
-    #         mu.squeeze(-1),
-    #         std.squeeze(-1),
-    #     )
+        # 保持原来 squeeze 行为
+        return (
+            action.squeeze(-1),
+            log_prob.squeeze(-1),
+            mu.squeeze(-1),
+            std.squeeze(-1),
+        )
 
 
 class SACGaussianActor(nn.Module):
     """SAC Actor with squashed Gaussian policy."""
-    def __init__(self, obs_dim, act_dim, hidden_dim=256):
+    def __init__(self, obs_dim, act_dim, hidden_dim=128):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(obs_dim, hidden_dim),
@@ -267,7 +267,7 @@ def compute_gae(traj, gamma=0.99, lam=0.95):
 
 class ReplayBuffer:
     """CTDE ReplayBuffer: 既保存各智能体局部观测，也保存全局观测，方便中心化 Critic 训练"""
-    def __init__(self, obs_dim, act_dim, global_dim, capacity=500000):
+    def __init__(self, obs_dim, act_dim, global_dim, capacity=50000):
         self.capacity = capacity
         self.obs_buf = np.zeros((capacity, obs_dim), dtype=np.float32)
         self.next_obs_buf = np.zeros((capacity, obs_dim), dtype=np.float32)
@@ -312,7 +312,7 @@ class ReplayBuffer:
 
 class QNetwork(nn.Module):
     """SAC 的 Q 网络 (Critic)"""
-    def __init__(self, obs_dim, act_dim, hidden_dim=256):
+    def __init__(self, obs_dim, act_dim, hidden_dim=128):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(obs_dim + act_dim, hidden_dim),
@@ -336,7 +336,7 @@ class MASACAgent:
     def __init__(self, obs_dim, act_dim, global_dim, action_low=-1.0, action_high=1.0,
                  lr=lr, gamma=0.99, tau=0.005, alpha=0.2,
                  automatic_entropy_tuning=True,
-                 buffer_size=5_000_0, hidden_dim=256):
+                 buffer_size=5_000_0, hidden_dim=128):
         self.obs_dim = obs_dim
         self.act_dim = act_dim if isinstance(act_dim, int) else int(act_dim)
         self.action_low = action_low
@@ -472,7 +472,7 @@ class MASACAgent:
 
 class DeterministicActor(nn.Module):
     """TD3 中用于输出确定性动作的 Actor 网络"""
-    def __init__(self, obs_dim, act_dim, hidden_dim=256):
+    def __init__(self, obs_dim, act_dim, hidden_dim=128):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(obs_dim, hidden_dim),
@@ -497,7 +497,7 @@ class MATD3Agent:
     def __init__(self, obs_dim, act_dim, global_dim, action_low=-1.0, action_high=1.0,
                  lr=lr, gamma=0.99, tau=0.005,
                  expl_noise=0.1, policy_noise=0.2, noise_clip=0.5, policy_delay=2,
-                 buffer_size=1_000_000, hidden_dim=256):
+                 buffer_size=1_000_000, hidden_dim=128):
         self.obs_dim = obs_dim
         self.act_dim = act_dim if isinstance(act_dim, int) else int(act_dim)
         self.action_low = action_low

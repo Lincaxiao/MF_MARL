@@ -4,22 +4,27 @@ hyperparameters:
   gamma: 0.99
   lam: 0.95
   tau: 0.01
-  learning_rate: 0.000005 # lower
+  learning_rate: 0.000004 # lower
   num_epochs: 4
   num_mini_batch: 5
   clip_param: 0.2
   value_loss_coef: 0.5
   entropy_coef: 0.01
   max_timesteps: 1000
-  start_timesteps: 500000 # stochastic policy
+  start_timesteps: 50000 # stochastic policy
   expl_noise: 0.1 # TD3
   policy_noise: 0.2
   noise_clip: 0.5
 
 env:
-  Num_users: 12
-  Num_servers: 4
-  Max_queue_len: 6
+  Num_users: 72
+  Num_servers: 8
+  Max_queue_len: 36
   Episode_limit: 1000
-  Max_batch_size: 2
+  Max_batch_size: 4
   Max_waiting_time: 10
+
+# 12 4 2
+# 24 8 2
+# 36 6 3 0.00002 seems good
+# 72 8 4 0.00001 ok SAC: 0.000004

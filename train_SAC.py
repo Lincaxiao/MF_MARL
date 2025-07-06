@@ -82,7 +82,7 @@ def train_sac_with_log(env,
     start_timesteps = hyperparams.get('start_timesteps', 500000)
 
     env.lamda = lamda_init
-    alpha = 0.2  # lamda 更新系数
+    alpha = 0.2 # lamda 更新系数
 
     total_timesteps = 0
     outer_iter = 0
@@ -319,7 +319,7 @@ if __name__ == "__main__":
                        reward_tol=5,
                        reward_window=5,
                        lamda_tol=0.05,
-                       max_outer_iter=30,
+                       max_outer_iter=60,
                        epochs_per_lamda=100,
                        log_interval=1,
                        outdir="./trainlog/train_sac") 
