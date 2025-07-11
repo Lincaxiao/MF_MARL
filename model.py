@@ -497,7 +497,7 @@ class MATD3Agent:
     def __init__(self, obs_dim, act_dim, global_dim, action_low=-1.0, action_high=1.0,
                  lr=lr, gamma=0.99, tau=0.005,
                  expl_noise=0.1, policy_noise=0.2, noise_clip=0.5, policy_delay=2,
-                 buffer_size=1_000_000, hidden_dim=128):
+                 buffer_size=1_000_00, hidden_dim=128):
         self.obs_dim = obs_dim
         self.act_dim = act_dim if isinstance(act_dim, int) else int(act_dim)
         self.action_low = action_low

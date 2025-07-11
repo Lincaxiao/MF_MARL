@@ -4,7 +4,7 @@ hyperparameters:
   gamma: 0.99
   lam: 0.95
   tau: 0.01
-  learning_rate: 0.000004 # lower
+  learning_rate: 0.0000001 # lower
   num_epochs: 4
   num_mini_batch: 5
   clip_param: 0.2
