@@ -8,3 +8,5 @@ trainlog/
 *.md
 # But do not ignore Architect.md
 !Architect.md
+# Ignore logs
+logs/
