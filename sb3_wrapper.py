@@ -1,89 +1,195 @@
 import gymnasium as gym
 import numpy as np
-from gymnasium.spaces import MultiDiscrete, Box
+from gymnasium import spaces
+
+# 假设 EdgeBatchEnv 在同一个目录下或已安装
 from EdgeBatchEnv import EdgeBatchEnv
 
-class EdgeBatchEnvWrapper(gym.Env):
-    """
-    A wrapper for the EdgeBatchEnv to make it compatible with Stable Baselines3.
 
-    This wrapper converts the multi-agent environment into a single-agent environment
-    with a unified observation space and a multi-discrete action space.
+class SB3Wrapper(gym.Env):
     """
-    def __init__(self, env_config: dict):
+    A wrapper for the multi-agent EdgeBatchEnv to make it compatible with
+    single-agent SB3 algorithms.
+
+    This wrapper flattens the observation and action spaces.
+    - The observation space is a single flat vector containing all local observations.
+    - The action space is a MultiDiscrete space representing the joint action of all agents.
+    """
+    metadata = {'render.modes': ['human']}
+
+    def __init__(self, env: EdgeBatchEnv, algo: str):
         """
-        Initializes the wrapper.
+        Initializes the SB3 wrapper.
 
         Args:
-            env_config (dict): Configuration dictionary for the EdgeBatchEnv.
+            env (EdgeBatchEnv): An already instantiated EdgeBatchEnv object.
+            algo (str): The name of the algorithm ('ppo', 'sac', 'td3') which
+                        determines the action space type.
         """
-        super(EdgeBatchEnvWrapper, self).__init__()
-        self.env = EdgeBatchEnv(**env_config)
+        super(SB3Wrapper, self).__init__()
+        self.env = env
+        self.algo = algo.lower()
 
-        # Define action space
-        action_dims = [self.env.user_action_dim] * self.env.n_users + \
-                      [self.env.server_action_dim] * self.env.n_servers
-        self.action_space = MultiDiscrete(action_dims)
+        # Define action and observation spaces
+        self.action_space = self._define_action_space()
+        self.observation_space = self._define_observation_space()
 
-        # Define observation space (without mean-field information)
-        user_obs_dim = len(self.env._get_user_obs(0))
-        server_obs_dim = len(self.env._get_server_obs(0))
-        obs_dim = self.env.n_users * user_obs_dim + self.env.n_servers * server_obs_dim
+    def _define_action_space(self):
+        """
+        Defines the action space based on the algorithm.
+        - PPO: Uses the native MultiDiscrete action space.
+        - SAC/TD3: Uses a continuous Box space that mimics hierarchical decision-making.
+        """
+        if self.algo in ['sac', 'td3']:
+            # For SAC/TD3, use a Box space that represents hierarchical choices.
+            # User action: [alloc_gate] + [server_preferences] -> 1 + n_servers
+            # Server action: [process_gate] -> 1
+            user_action_dim = 1 + self.env.n_servers
+            server_action_dim = 1
+            total_dim = self.env.n_users * user_action_dim + self.env.n_servers * server_action_dim
+            # Use [-1, 1] as it's common for policies with tanh activation
+            return spaces.Box(low=-1, high=1, shape=(total_dim,), dtype=np.float32)
+        else:
+            # For PPO, use the standard MultiDiscrete space
+            user_action_dims = [self.env.n_servers + 1] * self.env.n_users
+            server_action_dims = [2] * self.env.n_servers
+            return spaces.MultiDiscrete(user_action_dims + server_action_dims)
+
+    def _define_observation_space(self) -> spaces.Box:
+        """
+        Defines the flattened observation space for all agents.
+        - User observation: [h, aoi] (2 features)
+        - Server observation: [q_len, b_size, t] (3 features)
+        The final observation is a concatenation of all these features.
+        """
+        user_obs_dim = 2
+        server_obs_dim = 3
+        total_obs_dim = self.env.n_users * user_obs_dim + self.env.n_servers * server_obs_dim
         
-        self.observation_space = Box(
-            low=-np.inf,
-            high=np.inf,
-            shape=(obs_dim,),
-            dtype=np.float32
-        )
+        # Use -inf to inf for simplicity, can be refined if specific bounds are known
+        low = -np.inf * np.ones(total_obs_dim, dtype=np.float32)
+        high = np.inf * np.ones(total_obs_dim, dtype=np.float32)
+        
+        return spaces.Box(low=low, high=high, shape=(total_obs_dim,), dtype=np.float32)
 
-    def _flatten_obs(self, obs: list) -> np.ndarray:
+    def _flatten_obs(self, obs_list: list) -> np.ndarray:
         """
-        Flattens the list of observations from the environment into a single NumPy array.
-
-        Args:
-            obs (list): The list of lists containing observations for each agent.
-
-        Returns:
-            np.ndarray: A flattened NumPy array of the observations.
+        Flattens a list of observations from the environment into a single numpy array.
         """
-        flat_obs = [item for sublist in obs for item in sublist]
-        return np.array(flat_obs, dtype=np.float32)
+        return np.concatenate([np.array(obs) for obs in obs_list]).astype(np.float32)
 
     def reset(self, seed=None, options=None):
         """
-        Resets the environment and returns the initial flattened observation.
+        Resets the environment and returns the initial observation.
         """
         super().reset(seed=seed)
-        obs = self.env.reset()
-        return self._flatten_obs(obs), {}
+        initial_obs_list = self.env.reset()
+        flat_obs = self._flatten_obs(initial_obs_list)
+        return flat_obs, {}
 
     def step(self, action: np.ndarray):
         """
-        Takes a step in the environment.
+        Executes one time step within the environment.
+        If the algo is SAC/TD3, it decodes the continuous action vector into
+        discrete actions for the environment.
 
         Args:
-            action (np.ndarray): The action from the SB3 agent.
+            action (np.ndarray): An action from the SB3 agent.
 
         Returns:
-            tuple: A tuple containing the flattened next observation, reward, done flag, and info dict.
+            A tuple (observation, reward, terminated, truncated, info).
         """
-        action_list = action.tolist()
-        next_obs, reward, done, info = self.env.step(action_list)
-        flattened_next_obs = self._flatten_obs(next_obs)
-        # The 'done' flag in SB3 is now 'terminated' or 'truncated'
+        if self.algo in ['sac', 'td3']:
+            discrete_actions = []
+            current_idx = 0
+            # Decode user actions
+            user_action_dim = 1 + self.env.n_servers
+            for _ in range(self.env.n_users):
+                user_action_vec = action[current_idx : current_idx + user_action_dim]
+                alloc_gate = user_action_vec[0]
+                if alloc_gate > 0:
+                    # Decide to allocate: choose server with highest preference
+                    server_prefs = user_action_vec[1:]
+                    chosen_server_idx = np.argmax(server_prefs)
+                    discrete_actions.append(chosen_server_idx + 1) # +1 because 0 is "no-op"
+                else:
+                    # Decide not to allocate
+                    discrete_actions.append(0)
+                current_idx += user_action_dim
+            
+            # Decode server actions
+            for i in range(self.env.n_servers):
+                server_action_val = action[current_idx + i]
+                if server_action_val > 0:
+                    discrete_actions.append(1) # Process batch
+                else:
+                    discrete_actions.append(0) # Wait
+            action_list = discrete_actions
+        else:
+            # For PPO, the action is already discrete
+            action_list = action.tolist()
+
+        next_obs_list, reward, done, info = self.env.step(action_list)
+        
+        flat_next_obs = self._flatten_obs(next_obs_list)
+        
+        # `done` from custom env corresponds to `terminated` in gymnasium
         terminated = done
-        truncated = False # Assuming our environment doesn't have a truncation condition
-        return flattened_next_obs, reward, terminated, truncated, info
+        truncated = False # Assuming the env doesn't have a truncation condition like time limit
+
+        return flat_next_obs, reward, terminated, truncated, info
 
     def render(self, mode='human'):
         """
-        Rendering is not supported in this environment.
+        Renders the environment. For now, it prints basic info.
         """
-        pass
+        avg_aoi = self.env.completed_tasks_log[-1]['average_aoi'] if self.env.completed_tasks_log else 'N/A'
+        print(f"Time: {self.env.time_step}, Average AoI: {avg_aoi}")
 
     def close(self):
         """
-        Closes the environment.
+        Cleans up the environment's resources.
         """
         pass
+
+
+if __name__ == '__main__':
+    from stable_baselines3.common.env_checker import check_env
+
+    print("--- Running Environment Checker ---")
+    
+    # 1. Create environment instance
+    base_env = EdgeBatchEnv(
+        n_users=5,
+        n_servers=2,
+        batch_proc_time={'base': 2, 'per_task': 1},
+        max_batch_size=2
+    )
+    # Check with PPO (MultiDiscrete)
+    print("--- Checking with PPO ---")
+    env_ppo = SB3Wrapper(base_env, algo='ppo')
+    check_env(env_ppo, warn=True)
+    print("\n✅ PPO Wrapper passed the SB3 check!")
+
+    # Check with SAC (Box)
+    print("\n--- Checking with SAC ---")
+    env_sac = SB3Wrapper(base_env, algo='sac')
+    check_env(env_sac, warn=True)
+    print("\n✅ SAC Wrapper passed the SB3 check!")
+
+    print("\n--- Running Simple Interaction Test (SAC) ---")
+    
+    # 3. Optional: Simple interaction loop
+    obs, _ = env_sac.reset()
+    print(f"Initial observation shape: {obs.shape}")
+    
+    for i in range(10):
+        action = env_sac.action_space.sample() # Sample continuous action
+        obs, reward, terminated, truncated, info = env_sac.step(action)
+        print(f"Step {i+1}: Reward={reward:.2f}, Terminated={terminated}, Truncated={truncated}")
+        if terminated or truncated:
+            print("Episode finished. Resetting environment.")
+            obs, _ = env_sac.reset()
+            
+    env_sac.close()
+    print("\n✅ Simple interaction test completed.")
