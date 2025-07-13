@@ -9,7 +9,7 @@ import csv
 from dataclasses import asdict
 
 from EdgeBatchEnv import EdgeBatchEnv
-from model_mf import Actor, Critic, ReplayBuffer
+from model_mf import Actor, Critic, ReplayBuffer, HierarchicalActor
 
 
 # --- 日志配置 ---
@@ -52,8 +52,9 @@ class MFAC_Trainer:
         self.mean_field_dim = len(env.get_mean_field_state())
 
         # --- 初始化 Actor 和 Critic 网络 ---
-        self.user_actors = [Actor(self.user_obs_dim, self.mean_field_dim, self.user_action_dim).to(self.device) for _ in
-                            range(self.n_users)]
+        # 用户使用层次化策略网络，解除“是否分配”与“选服务器”耦合
+        self.user_actors = [HierarchicalActor(self.user_obs_dim, self.mean_field_dim, self.n_servers).to(self.device)
+                            for _ in range(self.n_users)]
         self.user_critics = [Critic(self.user_obs_dim, self.mean_field_dim, self.user_action_dim).to(self.device) for _
                              in range(self.n_users)]
         self.server_actors = [Actor(self.server_obs_dim, self.mean_field_dim, self.server_action_dim).to(self.device)
@@ -253,16 +254,16 @@ class MFAC_Trainer:
 if __name__ == '__main__':
     # --- 训练配置参数 ---
     config = {
-        'n_users': 7,
-        'n_servers': 3,
+        'n_users': 28, # 7,
+        'n_servers': 12, #3,
         'batch_proc_time': {'base': 3, 'per_task': 2}, # 批处理时间 = base + per_task * batch_size
-        'max_batch_size': 3,
-        'num_episodes': 20,  # 训练的总回合数
+        'max_batch_size': 12, # 3,
+        'num_episodes': 35, # 20,  # 训练的总回合数
         'episode_length': 1000,  # 每个回合的最大步数
         'buffer_capacity': 50000,  # 经验回放缓冲区的容量
         'batch_size': 128,  # 每次更新时采样的批次大小
-        'actor_lr': 1e-4,  # Actor学习率
-        'critic_lr': 1e-4,  # Critic学习率
+        'actor_lr': 4e-5, #1e-4,  # Actor学习率
+        'critic_lr': 4e-5, #1e-4,  # Critic学习率
         'gamma': 0.99,  # 折扣因子
         'alpha': 0.1,  # 平滑平均场更新率 (EMA)
         'entropy_coeff': 0.01,  # 熵正则化系数

@@ -90,7 +90,7 @@ class EdgeBatchEnv:
                 self.task_id_counter += 1
                 self.servers_state[server_idx]['q'].append(new_task)
                 user['h'] = 0
-
+                
     def _execute_server_action(self, server_id: int, action: int):
         server = self.servers_state[server_id]
         if server['t'] == -1 and len(server['q']) > 0 and action == 1:

@@ -10,3 +10,5 @@ trainlog/
 !Architect.md
 # Ignore logs
 logs/
+
+test_*
