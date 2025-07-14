@@ -33,8 +33,8 @@ class MFAC_Trainer:
     def __init__(self, env, config):
         self.env = env
         self.config = config
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = "cpu"
         # --- 获取环境维度信息 ---
         self.n_users = env.n_users
         self.n_servers = env.n_servers
@@ -262,8 +262,8 @@ if __name__ == '__main__':
         'episode_length': 1000,  # 每个回合的最大步数
         'buffer_capacity': 50000,  # 经验回放缓冲区的容量
         'batch_size': 128,  # 每次更新时采样的批次大小
-        'actor_lr': 4e-5, #1e-4,  # Actor学习率
-        'critic_lr': 4e-5, #1e-4,  # Critic学习率
+        'actor_lr': 1e-4,  # Actor学习率
+        'critic_lr': 1e-4,  # Critic学习率
         'gamma': 0.99,  # 折扣因子
         'alpha': 0.1,  # 平滑平均场更新率 (EMA)
         'entropy_coeff': 0.01,  # 熵正则化系数

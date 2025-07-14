@@ -1,5 +1,2 @@
-import torch
-
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print("Using device:", DEVICE)
-print(torch.cuda.is_available())
+from train_base import visualize_avg_aoi
+visualize_avg_aoi("logs/mappo_20250714_110652/training.log",3)
