@@ -168,9 +168,13 @@ class MASAC_Trainer:
                     break
 
             # 记录日志
+            # 保存完成任务日志，与其他算法保持一致
+            self.save_completed_tasks_log(episode)
+
             avg_aoi = episode_aoi / total_steps
+            completed_tasks_this_episode = len(self.env.completed_tasks_log)
             logging.info(
-                f"Episode {episode + 1}/{self.config['num_episodes']}, Reward: {episode_reward:.2f}, Avg AoI: {avg_aoi:.2f}"
+                f"Episode {episode + 1}/{self.config['num_episodes']}, Reward: {episode_reward:.2f}, Avg AoI: {avg_aoi:.2f}, Completed Tasks: {completed_tasks_this_episode}"
             )
 
         logging.info("Training finished.")
@@ -310,6 +314,32 @@ class MASAC_Trainer:
         tau = self.config["tau"]
         for param, target_param in zip(net.parameters(), target_net.parameters()):
             target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+
+    # -------------------- 保存已完成任务日志 --------------------
+    def save_completed_tasks_log(self, epoch: int):
+        """将 self.env.completed_tasks_log 写入 CSV 文件，路径: log_dir/completed_tasks"""
+        if not self.env.completed_tasks_log:
+            logging.info("No tasks completed in this episode; skip writing completed_tasks log.")
+            return
+
+        base_path = os.path.join(self.config["log_dir"], "completed_tasks")
+        os.makedirs(base_path, exist_ok=True)
+        filepath = os.path.join(base_path, f"completed_tasks_log_{epoch}.csv")
+
+        headers = ["task_id", "user_id", "server_id", "generation_time", "completion_time", "latency"]
+        with open(filepath, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            for task in self.env.completed_tasks_log:
+                writer.writerow([
+                    task["task_id"],
+                    task["user_id"],
+                    task["server_id"],
+                    task["generation_time"],
+                    task["completion_time"],
+                    task["latency"],
+                ])
+        logging.info(f"Saved completed_tasks log to {filepath}")
 
 
 # -------------------- 主入口 --------------------

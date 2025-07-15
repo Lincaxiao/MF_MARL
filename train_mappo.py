@@ -131,7 +131,7 @@ class MAPPO_Trainer:
             # ----------------------------------------------------------
             # 计算 GAE Advantage
             # ----------------------------------------------------------
-            # 先将列表转换为 numpy.ndarray，再转为 Tensor，可显著加速
+            # 先将列表转换为 numpy.ndarray，再转为 Tensor
             global_states = torch.from_numpy(np.asarray(global_state_buf, dtype=np.float32))
             with torch.no_grad():
                 values = self.critic(global_states).squeeze(-1).cpu().numpy()
@@ -241,20 +241,20 @@ class MAPPO_Trainer:
                     task['completion_time'],
                     task['latency']
                 ])
-        logging.info(f"Saved completed_tasks log to {filepath}")
+        # logging.info(f"Saved completed_tasks log to {filepath}")
 
 
 if __name__ == '__main__':
     # --- 配置 ---
     config = {
-        'n_users': 28,
-        'n_servers': 12,
+        'n_users': 7,
+        'n_servers': 3,
         'batch_proc_time': {'base': 3, 'per_task': 2},
-        'max_batch_size': 12,
-        'num_episodes': 200,
+        'max_batch_size': 3,
+        'num_episodes': 100,
         'episode_length': 1000,
-        'actor_lr': 5e-5,
-        'critic_lr': 5e-5,
+        'actor_lr': 1e-4,
+        'critic_lr': 1e-4,
         'gamma': 0.99,
         'gae_lambda': 0.95,
         'clip_ratio': 0.2,
@@ -266,6 +266,12 @@ if __name__ == '__main__':
     }
 
     setup_logger(config['log_dir'])
+
+    # 记录所有配置参数
+    logging.info("--- Training Configuration ---")
+    for key, value in config.items():
+        logging.info(f"{key}: {value}")
+    logging.info("--------------------------")
 
     env = EdgeBatchEnv(
         n_users=config['n_users'],
