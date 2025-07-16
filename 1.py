@@ -158,8 +158,9 @@ def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf:
     plt.savefig(png_path, dpi=300)
     print(f"已保存比较曲线图到 {png_path}")
 
-visualize_avg_aoi("logs/mappo_mf_20250715_125350/training.log",3)
-visualize_compare_avg_aoi("logs/mappo_20250715_114328/",
-                          "logs/mappo_mf_20250715_121311/",
-                          "logs/mappo_mf_20250715_125350/",
-                          1)
+visualize_avg_aoi("logs/mappo_mf_21_9_Local_1e-05/training.log", 3)
+visualize_avg_aoi("logs/mappo_mf_21_9_Local_4e-05/training.log",3)
+# visualize_compare_avg_aoi("logs/mappo_20250715_114328/",
+#                           "logs/mappo_mf_20250715_121311/",
+#                           "logs/mappo_mf_20250715_125350/",
+#                           1)

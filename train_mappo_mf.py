@@ -253,8 +253,9 @@ class MAPPO_MF_Trainer:
             # --- 日志记录 ---
             self.save_completed_tasks_log(ep)
             avg_aoi = ep_aoi / len(rew_buf)
+            completed_tasks_this_episode = len(self.env.completed_tasks_log)
             logging.info(f"Episode: {ep + 1}/{self.config['num_episodes']}, "
-                         f"Reward: {ep_rew:.2f}, Avg AoI: {avg_aoi:.2f}, Steps: {len(rew_buf)}")
+                         f"Reward: {ep_rew:.2f}, Avg AoI: {avg_aoi:.2f}, Completed Tasks: {completed_tasks_this_episode}")
 
     # ---------- GAE ----------
     def _gae(self, rewards, dones, values):
@@ -296,15 +297,17 @@ class MAPPO_MF_Trainer:
 
 
 if __name__ == '__main__':
+    # Scale 表示 user 和 server 放大的倍数
+    # Scale = 3
     config = {
-        'n_users': 7,
-        'n_servers': 3,
+        'n_users': 7 * 3,
+        'n_servers': 3 * 3,
         'batch_proc_time': {'base': 3, 'per_task': 2},
         'max_batch_size': 3,
-        'num_episodes': 100,
-        'episode_length': 1000,
-        'actor_lr': 1e-4,
-        'critic_lr': 1e-4,
+        'num_episodes': 1000,
+        'episode_length': 400,
+        'actor_lr': 1e-5,
+        'critic_lr': 1e-5,
         'gamma': 0.99,
         'gae_lambda': 0.95,
         'clip_ratio': 0.2,
@@ -312,9 +315,14 @@ if __name__ == '__main__':
         'mini_batch_size': 128,
         'entropy_coeff': 0.01,
         'max_grad_norm': 1.0,
-        'use_global': False,  # 切换变体
-        'log_dir': f'logs/mappo_mf_{datetime.now().strftime("%Y%m%d_%H%M%S")}',
+        # 'use_global': False,
+        'use_global': True,  # 是否使用全局状态作为 Critic 输入
+        'log_dir': '',  # 占位，稍后根据参数自动生成
     }
+
+    # 根据配置动态生成日志目录，格式: logs/mappo_mf_⟨Nuser⟩_⟨Nserver⟩_⟨Global|Local⟩_⟨Lr⟩
+    suffix = f"{config['n_users']}_{config['n_servers']}_{'Global' if config['use_global'] else 'Local'}_{config['actor_lr']}"
+    config['log_dir'] = f"logs/mappo_mf_{suffix}"
 
     setup_logger(config['log_dir'])
     # 记录所有配置参数

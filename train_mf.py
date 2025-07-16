@@ -147,7 +147,7 @@ class MFAC_Trainer:
 
     def train(self):
         # 训练开始前先随机填充 buffer
-        self._prefill_buffer()
+        # self._prefill_buffer()
 
         for episode in range(self.config['num_episodes']):
             total_steps = 0
