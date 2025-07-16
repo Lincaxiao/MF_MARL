@@ -1,0 +1,224 @@
+2025-07-17 06:06:47,451 [INFO] - Logger initialized.
+2025-07-17 06:06:47,451 [INFO] - --- Training Configuration ---
+2025-07-17 06:06:47,451 [INFO] - n_users: 21
+2025-07-17 06:06:47,451 [INFO] - n_servers: 9
+2025-07-17 06:06:47,451 [INFO] - batch_proc_time: {'base': 3, 'per_task': 2}
+2025-07-17 06:06:47,452 [INFO] - max_batch_size: 3
+2025-07-17 06:06:47,452 [INFO] - num_episodes: 1000
+2025-07-17 06:06:47,452 [INFO] - episode_length: 400
+2025-07-17 06:06:47,452 [INFO] - actor_lr: 1e-05
+2025-07-17 06:06:47,452 [INFO] - critic_lr: 1e-05
+2025-07-17 06:06:47,452 [INFO] - gamma: 0.99
+2025-07-17 06:06:47,452 [INFO] - gae_lambda: 0.95
+2025-07-17 06:06:47,452 [INFO] - clip_ratio: 0.2
+2025-07-17 06:06:47,453 [INFO] - update_epochs: 4
+2025-07-17 06:06:47,455 [INFO] - mini_batch_size: 128
+2025-07-17 06:06:47,455 [INFO] - entropy_coeff: 0.01
+2025-07-17 06:06:47,455 [INFO] - max_grad_norm: 1.0
+2025-07-17 06:06:47,455 [INFO] - use_global: True
+2025-07-17 06:06:47,455 [INFO] - log_dir: logs/mappo_mf_21_9_Global_1e-05
+2025-07-17 06:06:47,455 [INFO] - --------------------------
+2025-07-17 06:06:48,864 [INFO] - MAPPO-MF Trainer Initialized.
+2025-07-17 06:06:48,864 [INFO] - Device: cpu
+2025-07-17 06:06:48,864 [INFO] - User Obs Dim: 2, Server Obs Dim: 3
+2025-07-17 06:06:48,864 [INFO] - Global State Dim: 48
+2025-07-17 06:06:48,864 [INFO] - Mean-field Dim: 21
+2025-07-17 06:06:48,864 [INFO] - Use Global Critic: True
+2025-07-17 06:06:56,406 [INFO] - Episode: 1/1000, Reward: -6959.86, Avg AoI: 17.40, Completed Tasks: 679
+2025-07-17 06:07:02,673 [INFO] - Episode: 2/1000, Reward: -6886.52, Avg AoI: 17.22, Completed Tasks: 685
+2025-07-17 06:07:10,500 [INFO] - Episode: 3/1000, Reward: -7139.57, Avg AoI: 17.85, Completed Tasks: 670
+2025-07-17 06:07:17,896 [INFO] - Episode: 4/1000, Reward: -6857.76, Avg AoI: 17.14, Completed Tasks: 696
+2025-07-17 06:07:24,915 [INFO] - Episode: 5/1000, Reward: -7251.81, Avg AoI: 18.13, Completed Tasks: 674
+2025-07-17 06:07:32,550 [INFO] - Episode: 6/1000, Reward: -6834.43, Avg AoI: 17.09, Completed Tasks: 692
+2025-07-17 06:07:39,921 [INFO] - Episode: 7/1000, Reward: -6753.00, Avg AoI: 16.88, Completed Tasks: 695
+2025-07-17 06:07:47,269 [INFO] - Episode: 8/1000, Reward: -7080.81, Avg AoI: 17.70, Completed Tasks: 679
+2025-07-17 06:07:54,983 [INFO] - Episode: 9/1000, Reward: -6848.14, Avg AoI: 17.12, Completed Tasks: 694
+2025-07-17 06:08:02,615 [INFO] - Episode: 10/1000, Reward: -6987.29, Avg AoI: 17.47, Completed Tasks: 681
+2025-07-17 06:08:10,522 [INFO] - Episode: 11/1000, Reward: -7155.67, Avg AoI: 17.89, Completed Tasks: 683
+2025-07-17 06:08:19,020 [INFO] - Episode: 12/1000, Reward: -6876.67, Avg AoI: 17.19, Completed Tasks: 698
+2025-07-17 06:08:31,364 [INFO] - Episode: 13/1000, Reward: -7091.19, Avg AoI: 17.73, Completed Tasks: 686
+2025-07-17 06:08:43,589 [INFO] - Episode: 14/1000, Reward: -6919.19, Avg AoI: 17.30, Completed Tasks: 700
+2025-07-17 06:08:56,037 [INFO] - Episode: 15/1000, Reward: -6693.86, Avg AoI: 16.73, Completed Tasks: 719
+2025-07-17 06:09:09,742 [INFO] - Episode: 16/1000, Reward: -7377.71, Avg AoI: 18.44, Completed Tasks: 664
+2025-07-17 06:09:22,275 [INFO] - Episode: 17/1000, Reward: -6765.71, Avg AoI: 16.91, Completed Tasks: 714
+2025-07-17 06:09:34,434 [INFO] - Episode: 18/1000, Reward: -7214.33, Avg AoI: 18.04, Completed Tasks: 680
+2025-07-17 06:09:49,314 [INFO] - Episode: 19/1000, Reward: -7014.00, Avg AoI: 17.53, Completed Tasks: 693
+2025-07-17 06:10:03,153 [INFO] - Episode: 20/1000, Reward: -6860.05, Avg AoI: 17.15, Completed Tasks: 706
+2025-07-17 06:10:16,175 [INFO] - Episode: 21/1000, Reward: -6908.67, Avg AoI: 17.27, Completed Tasks: 700
+2025-07-17 06:10:28,912 [INFO] - Episode: 22/1000, Reward: -6930.10, Avg AoI: 17.33, Completed Tasks: 696
+2025-07-17 06:10:42,351 [INFO] - Episode: 23/1000, Reward: -6902.86, Avg AoI: 17.26, Completed Tasks: 700
+2025-07-17 06:10:56,071 [INFO] - Episode: 24/1000, Reward: -7075.24, Avg AoI: 17.69, Completed Tasks: 693
+2025-07-17 06:11:08,396 [INFO] - Episode: 25/1000, Reward: -7424.76, Avg AoI: 18.56, Completed Tasks: 664
+2025-07-17 06:11:22,052 [INFO] - Episode: 26/1000, Reward: -6751.24, Avg AoI: 16.88, Completed Tasks: 715
+2025-07-17 06:11:33,843 [INFO] - Episode: 27/1000, Reward: -7236.19, Avg AoI: 18.09, Completed Tasks: 688
+2025-07-17 06:11:47,039 [INFO] - Episode: 28/1000, Reward: -6842.71, Avg AoI: 17.11, Completed Tasks: 713
+2025-07-17 06:11:59,558 [INFO] - Episode: 29/1000, Reward: -6974.19, Avg AoI: 17.44, Completed Tasks: 704
+2025-07-17 06:12:12,202 [INFO] - Episode: 30/1000, Reward: -7144.57, Avg AoI: 17.86, Completed Tasks: 693
+2025-07-17 06:12:26,261 [INFO] - Episode: 31/1000, Reward: -7155.00, Avg AoI: 17.89, Completed Tasks: 686
+2025-07-17 06:12:38,823 [INFO] - Episode: 32/1000, Reward: -7133.86, Avg AoI: 17.83, Completed Tasks: 695
+2025-07-17 06:12:50,468 [INFO] - Episode: 33/1000, Reward: -6927.29, Avg AoI: 17.32, Completed Tasks: 709
+2025-07-17 06:13:02,464 [INFO] - Episode: 34/1000, Reward: -6929.95, Avg AoI: 17.32, Completed Tasks: 708
+2025-07-17 06:13:14,342 [INFO] - Episode: 35/1000, Reward: -6959.71, Avg AoI: 17.40, Completed Tasks: 713
+2025-07-17 06:13:26,546 [INFO] - Episode: 36/1000, Reward: -7118.33, Avg AoI: 17.80, Completed Tasks: 691
+2025-07-17 06:13:38,801 [INFO] - Episode: 37/1000, Reward: -7265.67, Avg AoI: 18.16, Completed Tasks: 682
+2025-07-17 06:13:50,979 [INFO] - Episode: 38/1000, Reward: -7222.95, Avg AoI: 18.06, Completed Tasks: 688
+2025-07-17 06:14:03,343 [INFO] - Episode: 39/1000, Reward: -7261.38, Avg AoI: 18.15, Completed Tasks: 688
+2025-07-17 06:14:15,413 [INFO] - Episode: 40/1000, Reward: -7081.62, Avg AoI: 17.70, Completed Tasks: 699
+2025-07-17 06:14:27,643 [INFO] - Episode: 41/1000, Reward: -6925.10, Avg AoI: 17.31, Completed Tasks: 712
+2025-07-17 06:14:40,540 [INFO] - Episode: 42/1000, Reward: -6854.10, Avg AoI: 17.14, Completed Tasks: 713
+2025-07-17 06:14:53,774 [INFO] - Episode: 43/1000, Reward: -7202.95, Avg AoI: 18.01, Completed Tasks: 695
+2025-07-17 06:15:06,600 [INFO] - Episode: 44/1000, Reward: -7281.33, Avg AoI: 18.20, Completed Tasks: 687
+2025-07-17 06:15:19,704 [INFO] - Episode: 45/1000, Reward: -7637.76, Avg AoI: 19.09, Completed Tasks: 668
+2025-07-17 06:15:32,022 [INFO] - Episode: 46/1000, Reward: -6960.33, Avg AoI: 17.40, Completed Tasks: 706
+2025-07-17 06:15:45,237 [INFO] - Episode: 47/1000, Reward: -6912.43, Avg AoI: 17.28, Completed Tasks: 707
+2025-07-17 06:15:56,895 [INFO] - Episode: 48/1000, Reward: -6857.90, Avg AoI: 17.14, Completed Tasks: 713
+2025-07-17 06:16:08,580 [INFO] - Episode: 49/1000, Reward: -6954.76, Avg AoI: 17.39, Completed Tasks: 700
+2025-07-17 06:16:20,818 [INFO] - Episode: 50/1000, Reward: -6954.76, Avg AoI: 17.39, Completed Tasks: 708
+2025-07-17 06:16:33,397 [INFO] - Episode: 51/1000, Reward: -7240.14, Avg AoI: 18.10, Completed Tasks: 692
+2025-07-17 06:16:44,780 [INFO] - Episode: 52/1000, Reward: -7004.19, Avg AoI: 17.51, Completed Tasks: 709
+2025-07-17 06:16:56,190 [INFO] - Episode: 53/1000, Reward: -6863.24, Avg AoI: 17.16, Completed Tasks: 717
+2025-07-17 06:17:08,834 [INFO] - Episode: 54/1000, Reward: -7134.67, Avg AoI: 17.84, Completed Tasks: 699
+2025-07-17 06:17:21,923 [INFO] - Episode: 55/1000, Reward: -7229.14, Avg AoI: 18.07, Completed Tasks: 702
+2025-07-17 06:17:35,252 [INFO] - Episode: 56/1000, Reward: -7002.67, Avg AoI: 17.51, Completed Tasks: 707
+2025-07-17 06:17:47,802 [INFO] - Episode: 57/1000, Reward: -7023.05, Avg AoI: 17.56, Completed Tasks: 702
+2025-07-17 06:18:00,680 [INFO] - Episode: 58/1000, Reward: -7345.00, Avg AoI: 18.36, Completed Tasks: 702
+2025-07-17 06:18:14,176 [INFO] - Episode: 59/1000, Reward: -7607.05, Avg AoI: 19.02, Completed Tasks: 677
+2025-07-17 06:18:26,117 [INFO] - Episode: 60/1000, Reward: -6923.00, Avg AoI: 17.31, Completed Tasks: 718
+2025-07-17 06:18:37,825 [INFO] - Episode: 61/1000, Reward: -6853.57, Avg AoI: 17.13, Completed Tasks: 718
+2025-07-17 06:18:49,563 [INFO] - Episode: 62/1000, Reward: -7812.33, Avg AoI: 19.53, Completed Tasks: 668
+2025-07-17 06:19:00,750 [INFO] - Episode: 63/1000, Reward: -7009.48, Avg AoI: 17.52, Completed Tasks: 707
+2025-07-17 06:19:12,189 [INFO] - Episode: 64/1000, Reward: -7074.24, Avg AoI: 17.69, Completed Tasks: 702
+2025-07-17 06:19:24,035 [INFO] - Episode: 65/1000, Reward: -7229.00, Avg AoI: 18.07, Completed Tasks: 686
+2025-07-17 06:19:36,238 [INFO] - Episode: 66/1000, Reward: -6723.48, Avg AoI: 16.81, Completed Tasks: 728
+2025-07-17 06:19:48,324 [INFO] - Episode: 67/1000, Reward: -6736.90, Avg AoI: 16.84, Completed Tasks: 729
+2025-07-17 06:20:00,487 [INFO] - Episode: 68/1000, Reward: -6770.67, Avg AoI: 16.93, Completed Tasks: 729
+2025-07-17 06:20:12,458 [INFO] - Episode: 69/1000, Reward: -7434.38, Avg AoI: 18.59, Completed Tasks: 674
+2025-07-17 06:20:24,338 [INFO] - Episode: 70/1000, Reward: -6739.95, Avg AoI: 16.85, Completed Tasks: 728
+2025-07-17 06:20:35,417 [INFO] - Episode: 71/1000, Reward: -7280.67, Avg AoI: 18.20, Completed Tasks: 682
+2025-07-17 06:20:46,363 [INFO] - Episode: 72/1000, Reward: -6785.95, Avg AoI: 16.96, Completed Tasks: 729
+2025-07-17 06:20:57,461 [INFO] - Episode: 73/1000, Reward: -6902.43, Avg AoI: 17.26, Completed Tasks: 711
+2025-07-17 06:21:08,311 [INFO] - Episode: 74/1000, Reward: -7181.19, Avg AoI: 17.95, Completed Tasks: 705
+2025-07-17 06:21:19,327 [INFO] - Episode: 75/1000, Reward: -6825.81, Avg AoI: 17.06, Completed Tasks: 720
+2025-07-17 06:21:30,388 [INFO] - Episode: 76/1000, Reward: -7310.86, Avg AoI: 18.28, Completed Tasks: 703
+2025-07-17 06:21:42,207 [INFO] - Episode: 77/1000, Reward: -6798.29, Avg AoI: 17.00, Completed Tasks: 725
+2025-07-17 06:21:54,605 [INFO] - Episode: 78/1000, Reward: -7268.19, Avg AoI: 18.17, Completed Tasks: 704
+2025-07-17 06:22:06,933 [INFO] - Episode: 79/1000, Reward: -6870.71, Avg AoI: 17.18, Completed Tasks: 721
+2025-07-17 06:22:19,346 [INFO] - Episode: 80/1000, Reward: -6713.95, Avg AoI: 16.78, Completed Tasks: 734
+2025-07-17 06:22:31,503 [INFO] - Episode: 81/1000, Reward: -6899.90, Avg AoI: 17.25, Completed Tasks: 720
+2025-07-17 06:22:43,420 [INFO] - Episode: 82/1000, Reward: -7111.33, Avg AoI: 17.78, Completed Tasks: 702
+2025-07-17 06:22:55,228 [INFO] - Episode: 83/1000, Reward: -6833.67, Avg AoI: 17.08, Completed Tasks: 727
+2025-07-17 06:23:06,619 [INFO] - Episode: 84/1000, Reward: -6918.76, Avg AoI: 17.30, Completed Tasks: 713
+2025-07-17 06:23:17,949 [INFO] - Episode: 85/1000, Reward: -6935.57, Avg AoI: 17.34, Completed Tasks: 712
+2025-07-17 06:23:29,814 [INFO] - Episode: 86/1000, Reward: -6842.10, Avg AoI: 17.11, Completed Tasks: 712
+2025-07-17 06:23:41,479 [INFO] - Episode: 87/1000, Reward: -7120.57, Avg AoI: 17.80, Completed Tasks: 705
+2025-07-17 06:23:53,075 [INFO] - Episode: 88/1000, Reward: -7189.86, Avg AoI: 17.97, Completed Tasks: 703
+2025-07-17 06:24:05,990 [INFO] - Episode: 89/1000, Reward: -7239.00, Avg AoI: 18.10, Completed Tasks: 699
+2025-07-17 06:24:18,758 [INFO] - Episode: 90/1000, Reward: -6862.00, Avg AoI: 17.15, Completed Tasks: 725
+2025-07-17 06:24:30,972 [INFO] - Episode: 91/1000, Reward: -7478.43, Avg AoI: 18.70, Completed Tasks: 678
+2025-07-17 06:24:43,252 [INFO] - Episode: 92/1000, Reward: -6844.43, Avg AoI: 17.11, Completed Tasks: 719
+2025-07-17 06:24:55,532 [INFO] - Episode: 93/1000, Reward: -7209.76, Avg AoI: 18.02, Completed Tasks: 695
+2025-07-17 06:25:07,001 [INFO] - Episode: 94/1000, Reward: -7021.71, Avg AoI: 17.55, Completed Tasks: 711
+2025-07-17 06:25:19,870 [INFO] - Episode: 95/1000, Reward: -7413.10, Avg AoI: 18.53, Completed Tasks: 686
+2025-07-17 06:25:31,687 [INFO] - Episode: 96/1000, Reward: -6747.62, Avg AoI: 16.87, Completed Tasks: 727
+2025-07-17 06:25:44,602 [INFO] - Episode: 97/1000, Reward: -7299.10, Avg AoI: 18.25, Completed Tasks: 683
+2025-07-17 06:25:54,948 [INFO] - Episode: 98/1000, Reward: -6966.52, Avg AoI: 17.42, Completed Tasks: 715
+2025-07-17 06:26:06,027 [INFO] - Episode: 99/1000, Reward: -6896.10, Avg AoI: 17.24, Completed Tasks: 721
+2025-07-17 06:26:17,184 [INFO] - Episode: 100/1000, Reward: -7154.71, Avg AoI: 17.89, Completed Tasks: 695
+2025-07-17 06:26:29,533 [INFO] - Episode: 101/1000, Reward: -7593.52, Avg AoI: 18.98, Completed Tasks: 676
+2025-07-17 06:26:40,823 [INFO] - Episode: 102/1000, Reward: -7084.90, Avg AoI: 17.71, Completed Tasks: 703
+2025-07-17 06:26:52,146 [INFO] - Episode: 103/1000, Reward: -6960.71, Avg AoI: 17.40, Completed Tasks: 718
+2025-07-17 06:27:02,986 [INFO] - Episode: 104/1000, Reward: -6874.67, Avg AoI: 17.19, Completed Tasks: 717
+2025-07-17 06:27:18,029 [INFO] - Episode: 105/1000, Reward: -7108.52, Avg AoI: 17.77, Completed Tasks: 708
+2025-07-17 06:27:30,717 [INFO] - Episode: 106/1000, Reward: -7040.71, Avg AoI: 17.60, Completed Tasks: 706
+2025-07-17 06:27:40,719 [INFO] - Episode: 107/1000, Reward: -6834.62, Avg AoI: 17.09, Completed Tasks: 729
+2025-07-17 06:27:51,946 [INFO] - Episode: 108/1000, Reward: -7248.10, Avg AoI: 18.12, Completed Tasks: 684
+2025-07-17 06:28:02,417 [INFO] - Episode: 109/1000, Reward: -7145.24, Avg AoI: 17.86, Completed Tasks: 698
+2025-07-17 06:28:11,778 [INFO] - Episode: 110/1000, Reward: -6840.57, Avg AoI: 17.10, Completed Tasks: 726
+2025-07-17 06:28:21,130 [INFO] - Episode: 111/1000, Reward: -6993.19, Avg AoI: 17.48, Completed Tasks: 712
+2025-07-17 06:28:31,349 [INFO] - Episode: 112/1000, Reward: -7257.90, Avg AoI: 18.14, Completed Tasks: 695
+2025-07-17 06:28:42,936 [INFO] - Episode: 113/1000, Reward: -6989.57, Avg AoI: 17.47, Completed Tasks: 713
+2025-07-17 06:28:53,376 [INFO] - Episode: 114/1000, Reward: -7152.86, Avg AoI: 17.88, Completed Tasks: 696
+2025-07-17 06:29:05,596 [INFO] - Episode: 115/1000, Reward: -6931.81, Avg AoI: 17.33, Completed Tasks: 713
+2025-07-17 06:29:18,241 [INFO] - Episode: 116/1000, Reward: -6937.00, Avg AoI: 17.34, Completed Tasks: 709
+2025-07-17 06:29:31,022 [INFO] - Episode: 117/1000, Reward: -6844.19, Avg AoI: 17.11, Completed Tasks: 722
+2025-07-17 06:29:40,640 [INFO] - Episode: 118/1000, Reward: -6968.00, Avg AoI: 17.42, Completed Tasks: 711
+2025-07-17 06:29:49,509 [INFO] - Episode: 119/1000, Reward: -7850.14, Avg AoI: 19.63, Completed Tasks: 667
+2025-07-17 06:29:58,872 [INFO] - Episode: 120/1000, Reward: -7027.00, Avg AoI: 17.57, Completed Tasks: 696
+2025-07-17 06:30:11,234 [INFO] - Episode: 121/1000, Reward: -7120.24, Avg AoI: 17.80, Completed Tasks: 696
+2025-07-17 06:30:22,309 [INFO] - Episode: 122/1000, Reward: -7174.00, Avg AoI: 17.94, Completed Tasks: 698
+2025-07-17 06:30:33,645 [INFO] - Episode: 123/1000, Reward: -6868.90, Avg AoI: 17.17, Completed Tasks: 716
+2025-07-17 06:30:44,962 [INFO] - Episode: 124/1000, Reward: -6886.67, Avg AoI: 17.22, Completed Tasks: 723
+2025-07-17 06:30:57,436 [INFO] - Episode: 125/1000, Reward: -6816.38, Avg AoI: 17.04, Completed Tasks: 726
+2025-07-17 06:31:10,102 [INFO] - Episode: 126/1000, Reward: -7279.71, Avg AoI: 18.20, Completed Tasks: 699
+2025-07-17 06:31:22,722 [INFO] - Episode: 127/1000, Reward: -6978.43, Avg AoI: 17.45, Completed Tasks: 711
+2025-07-17 06:31:35,967 [INFO] - Episode: 128/1000, Reward: -7167.57, Avg AoI: 17.92, Completed Tasks: 705
+2025-07-17 06:31:48,229 [INFO] - Episode: 129/1000, Reward: -6947.48, Avg AoI: 17.37, Completed Tasks: 713
+2025-07-17 06:31:59,677 [INFO] - Episode: 130/1000, Reward: -6971.52, Avg AoI: 17.43, Completed Tasks: 713
+2025-07-17 06:32:10,782 [INFO] - Episode: 131/1000, Reward: -7009.81, Avg AoI: 17.52, Completed Tasks: 709
+2025-07-17 06:32:22,003 [INFO] - Episode: 132/1000, Reward: -6946.52, Avg AoI: 17.37, Completed Tasks: 717
+2025-07-17 06:32:33,609 [INFO] - Episode: 133/1000, Reward: -7350.57, Avg AoI: 18.38, Completed Tasks: 680
+2025-07-17 06:32:48,668 [INFO] - Episode: 134/1000, Reward: -7435.24, Avg AoI: 18.59, Completed Tasks: 683
+2025-07-17 06:33:02,108 [INFO] - Episode: 135/1000, Reward: -7020.33, Avg AoI: 17.55, Completed Tasks: 711
+2025-07-17 06:33:15,577 [INFO] - Episode: 136/1000, Reward: -6890.76, Avg AoI: 17.23, Completed Tasks: 723
+2025-07-17 06:33:29,335 [INFO] - Episode: 137/1000, Reward: -7195.67, Avg AoI: 17.99, Completed Tasks: 693
+2025-07-17 06:33:41,752 [INFO] - Episode: 138/1000, Reward: -6889.43, Avg AoI: 17.22, Completed Tasks: 719
+2025-07-17 06:33:53,912 [INFO] - Episode: 139/1000, Reward: -6979.05, Avg AoI: 17.45, Completed Tasks: 713
+2025-07-17 06:34:05,147 [INFO] - Episode: 140/1000, Reward: -7092.00, Avg AoI: 17.73, Completed Tasks: 709
+2025-07-17 06:34:17,570 [INFO] - Episode: 141/1000, Reward: -6824.57, Avg AoI: 17.06, Completed Tasks: 722
+2025-07-17 06:34:30,434 [INFO] - Episode: 142/1000, Reward: -7861.38, Avg AoI: 19.65, Completed Tasks: 667
+2025-07-17 06:34:42,771 [INFO] - Episode: 143/1000, Reward: -7263.62, Avg AoI: 18.16, Completed Tasks: 688
+2025-07-17 06:34:54,778 [INFO] - Episode: 144/1000, Reward: -7236.10, Avg AoI: 18.09, Completed Tasks: 687
+2025-07-17 06:35:05,220 [INFO] - Episode: 145/1000, Reward: -6917.62, Avg AoI: 17.29, Completed Tasks: 720
+2025-07-17 06:35:16,461 [INFO] - Episode: 146/1000, Reward: -6932.62, Avg AoI: 17.33, Completed Tasks: 716
+2025-07-17 06:35:25,942 [INFO] - Episode: 147/1000, Reward: -7049.52, Avg AoI: 17.62, Completed Tasks: 706
+2025-07-17 06:35:36,071 [INFO] - Episode: 148/1000, Reward: -6761.33, Avg AoI: 16.90, Completed Tasks: 730
+2025-07-17 06:35:46,555 [INFO] - Episode: 149/1000, Reward: -7054.57, Avg AoI: 17.64, Completed Tasks: 708
+2025-07-17 06:35:58,264 [INFO] - Episode: 150/1000, Reward: -7025.57, Avg AoI: 17.56, Completed Tasks: 708
+2025-07-17 06:36:09,036 [INFO] - Episode: 151/1000, Reward: -6912.52, Avg AoI: 17.28, Completed Tasks: 721
+2025-07-17 06:36:19,250 [INFO] - Episode: 152/1000, Reward: -6921.38, Avg AoI: 17.30, Completed Tasks: 717
+2025-07-17 06:36:29,948 [INFO] - Episode: 153/1000, Reward: -6961.86, Avg AoI: 17.40, Completed Tasks: 713
+2025-07-17 06:36:40,922 [INFO] - Episode: 154/1000, Reward: -7192.76, Avg AoI: 17.98, Completed Tasks: 695
+2025-07-17 06:36:52,104 [INFO] - Episode: 155/1000, Reward: -7304.29, Avg AoI: 18.26, Completed Tasks: 689
+2025-07-17 06:37:03,391 [INFO] - Episode: 156/1000, Reward: -7354.29, Avg AoI: 18.39, Completed Tasks: 685
+2025-07-17 06:37:12,160 [INFO] - Episode: 157/1000, Reward: -6996.67, Avg AoI: 17.49, Completed Tasks: 711
+2025-07-17 06:37:21,837 [INFO] - Episode: 158/1000, Reward: -6895.38, Avg AoI: 17.24, Completed Tasks: 720
+2025-07-17 06:37:31,093 [INFO] - Episode: 159/1000, Reward: -7179.14, Avg AoI: 17.95, Completed Tasks: 692
+2025-07-17 06:37:40,597 [INFO] - Episode: 160/1000, Reward: -7086.62, Avg AoI: 17.72, Completed Tasks: 697
+2025-07-17 06:37:53,631 [INFO] - Episode: 161/1000, Reward: -6793.95, Avg AoI: 16.98, Completed Tasks: 722
+2025-07-17 06:38:07,662 [INFO] - Episode: 162/1000, Reward: -6924.86, Avg AoI: 17.31, Completed Tasks: 720
+2025-07-17 06:38:19,929 [INFO] - Episode: 163/1000, Reward: -7180.62, Avg AoI: 17.95, Completed Tasks: 698
+2025-07-17 06:38:32,380 [INFO] - Episode: 164/1000, Reward: -6784.86, Avg AoI: 16.96, Completed Tasks: 728
+2025-07-17 06:38:43,217 [INFO] - Episode: 165/1000, Reward: -6828.86, Avg AoI: 17.07, Completed Tasks: 732
+2025-07-17 06:38:52,764 [INFO] - Episode: 166/1000, Reward: -7161.33, Avg AoI: 17.90, Completed Tasks: 699
+2025-07-17 06:39:04,598 [INFO] - Episode: 167/1000, Reward: -7009.76, Avg AoI: 17.52, Completed Tasks: 711
+2025-07-17 06:39:13,656 [INFO] - Episode: 168/1000, Reward: -7049.52, Avg AoI: 17.62, Completed Tasks: 716
+2025-07-17 06:39:22,574 [INFO] - Episode: 169/1000, Reward: -6784.57, Avg AoI: 16.96, Completed Tasks: 725
+2025-07-17 06:39:31,941 [INFO] - Episode: 170/1000, Reward: -7045.43, Avg AoI: 17.61, Completed Tasks: 711
+2025-07-17 06:39:41,863 [INFO] - Episode: 171/1000, Reward: -6854.00, Avg AoI: 17.13, Completed Tasks: 723
+2025-07-17 06:39:52,602 [INFO] - Episode: 172/1000, Reward: -7215.86, Avg AoI: 18.04, Completed Tasks: 705
+2025-07-17 06:40:02,005 [INFO] - Episode: 173/1000, Reward: -6878.48, Avg AoI: 17.20, Completed Tasks: 723
+2025-07-17 06:40:12,496 [INFO] - Episode: 174/1000, Reward: -6911.81, Avg AoI: 17.28, Completed Tasks: 720
+2025-07-17 06:40:22,730 [INFO] - Episode: 175/1000, Reward: -6956.05, Avg AoI: 17.39, Completed Tasks: 714
+2025-07-17 06:40:32,945 [INFO] - Episode: 176/1000, Reward: -7111.52, Avg AoI: 17.78, Completed Tasks: 694
+2025-07-17 06:40:46,551 [INFO] - Episode: 177/1000, Reward: -7033.86, Avg AoI: 17.58, Completed Tasks: 713
+2025-07-17 06:40:55,400 [INFO] - Episode: 178/1000, Reward: -6936.38, Avg AoI: 17.34, Completed Tasks: 712
+2025-07-17 06:41:04,305 [INFO] - Episode: 179/1000, Reward: -6646.62, Avg AoI: 16.62, Completed Tasks: 744
+2025-07-17 06:41:13,113 [INFO] - Episode: 180/1000, Reward: -6665.14, Avg AoI: 16.66, Completed Tasks: 740
+2025-07-17 06:41:20,882 [INFO] - Episode: 181/1000, Reward: -7009.24, Avg AoI: 17.52, Completed Tasks: 711
+2025-07-17 06:41:28,454 [INFO] - Episode: 182/1000, Reward: -7079.76, Avg AoI: 17.70, Completed Tasks: 709
+2025-07-17 06:41:35,209 [INFO] - Episode: 183/1000, Reward: -6979.24, Avg AoI: 17.45, Completed Tasks: 723
+2025-07-17 06:41:44,196 [INFO] - Episode: 184/1000, Reward: -6948.71, Avg AoI: 17.37, Completed Tasks: 708
+2025-07-17 06:41:56,831 [INFO] - Episode: 185/1000, Reward: -7024.19, Avg AoI: 17.56, Completed Tasks: 713
+2025-07-17 06:42:04,419 [INFO] - Episode: 186/1000, Reward: -7250.14, Avg AoI: 18.13, Completed Tasks: 687
+2025-07-17 06:42:10,958 [INFO] - Episode: 187/1000, Reward: -7060.33, Avg AoI: 17.65, Completed Tasks: 708
+2025-07-17 06:42:17,572 [INFO] - Episode: 188/1000, Reward: -6860.67, Avg AoI: 17.15, Completed Tasks: 727
+2025-07-17 06:42:24,327 [INFO] - Episode: 189/1000, Reward: -6743.24, Avg AoI: 16.86, Completed Tasks: 733
+2025-07-17 06:42:31,004 [INFO] - Episode: 190/1000, Reward: -6944.00, Avg AoI: 17.36, Completed Tasks: 717
+2025-07-17 06:42:37,391 [INFO] - Episode: 191/1000, Reward: -7279.10, Avg AoI: 18.20, Completed Tasks: 699
+2025-07-17 06:42:43,920 [INFO] - Episode: 192/1000, Reward: -7150.38, Avg AoI: 17.88, Completed Tasks: 705
+2025-07-17 06:42:51,714 [INFO] - Episode: 193/1000, Reward: -6871.52, Avg AoI: 17.18, Completed Tasks: 725
+2025-07-17 06:42:58,887 [INFO] - Episode: 194/1000, Reward: -7102.90, Avg AoI: 17.76, Completed Tasks: 702
+2025-07-17 06:43:05,385 [INFO] - Episode: 195/1000, Reward: -7060.33, Avg AoI: 17.65, Completed Tasks: 709
+2025-07-17 06:43:11,850 [INFO] - Episode: 196/1000, Reward: -6831.86, Avg AoI: 17.08, Completed Tasks: 727
+2025-07-17 06:43:18,534 [INFO] - Episode: 197/1000, Reward: -6817.52, Avg AoI: 17.04, Completed Tasks: 727
+2025-07-17 06:43:26,364 [INFO] - Episode: 198/1000, Reward: -6948.71, Avg AoI: 17.37, Completed Tasks: 721

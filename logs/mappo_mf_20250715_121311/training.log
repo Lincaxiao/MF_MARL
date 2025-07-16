@@ -1,0 +1,116 @@
+2025-07-15 12:13:11,775 [INFO] - Logger initialized.
+2025-07-15 12:13:11,775 [INFO] - --- Training Configuration ---
+2025-07-15 12:13:11,775 [INFO] - n_users: 7
+2025-07-15 12:13:11,775 [INFO] - n_servers: 3
+2025-07-15 12:13:11,776 [INFO] - batch_proc_time: {'base': 3, 'per_task': 2}
+2025-07-15 12:13:11,776 [INFO] - max_batch_size: 3
+2025-07-15 12:13:11,776 [INFO] - num_episodes: 100
+2025-07-15 12:13:11,776 [INFO] - episode_length: 1000
+2025-07-15 12:13:11,776 [INFO] - actor_lr: 0.0001
+2025-07-15 12:13:11,776 [INFO] - critic_lr: 0.0001
+2025-07-15 12:13:11,776 [INFO] - gamma: 0.99
+2025-07-15 12:13:11,776 [INFO] - gae_lambda: 0.95
+2025-07-15 12:13:11,777 [INFO] - clip_ratio: 0.2
+2025-07-15 12:13:11,777 [INFO] - update_epochs: 4
+2025-07-15 12:13:11,778 [INFO] - mini_batch_size: 128
+2025-07-15 12:13:11,778 [INFO] - entropy_coeff: 0.01
+2025-07-15 12:13:11,778 [INFO] - max_grad_norm: 1.0
+2025-07-15 12:13:11,778 [INFO] - use_global: True
+2025-07-15 12:13:11,778 [INFO] - log_dir: logs/mappo_mf_20250715_121311
+2025-07-15 12:13:11,778 [INFO] - --------------------------
+2025-07-15 12:13:12,976 [INFO] - MAPPO-MF Trainer Initialized.
+2025-07-15 12:13:12,976 [INFO] - Device: cpu
+2025-07-15 12:13:12,976 [INFO] - User Obs Dim: 2, Server Obs Dim: 3
+2025-07-15 12:13:12,976 [INFO] - Global State Dim: 16
+2025-07-15 12:13:12,977 [INFO] - Mean-field Dim: 21
+2025-07-15 12:13:12,977 [INFO] - Use Global Critic: True
+2025-07-15 12:13:18,284 [INFO] - Episode: 1/100, Reward: -16907.57, Avg AoI: 16.91, Steps: 1000
+2025-07-15 12:13:23,598 [INFO] - Episode: 2/100, Reward: -16688.71, Avg AoI: 16.69, Steps: 1000
+2025-07-15 12:13:28,783 [INFO] - Episode: 3/100, Reward: -17231.86, Avg AoI: 17.23, Steps: 1000
+2025-07-15 12:13:34,249 [INFO] - Episode: 4/100, Reward: -17411.29, Avg AoI: 17.41, Steps: 1000
+2025-07-15 12:13:39,753 [INFO] - Episode: 5/100, Reward: -17667.43, Avg AoI: 17.67, Steps: 1000
+2025-07-15 12:13:45,293 [INFO] - Episode: 6/100, Reward: -17139.29, Avg AoI: 17.14, Steps: 1000
+2025-07-15 12:13:51,102 [INFO] - Episode: 7/100, Reward: -16558.86, Avg AoI: 16.56, Steps: 1000
+2025-07-15 12:13:56,923 [INFO] - Episode: 8/100, Reward: -16511.57, Avg AoI: 16.51, Steps: 1000
+2025-07-15 12:14:02,622 [INFO] - Episode: 9/100, Reward: -17616.43, Avg AoI: 17.62, Steps: 1000
+2025-07-15 12:14:08,269 [INFO] - Episode: 10/100, Reward: -16886.29, Avg AoI: 16.89, Steps: 1000
+2025-07-15 12:14:13,916 [INFO] - Episode: 11/100, Reward: -17000.00, Avg AoI: 17.00, Steps: 1000
+2025-07-15 12:14:19,445 [INFO] - Episode: 12/100, Reward: -17546.00, Avg AoI: 17.55, Steps: 1000
+2025-07-15 12:14:24,953 [INFO] - Episode: 13/100, Reward: -16803.29, Avg AoI: 16.80, Steps: 1000
+2025-07-15 12:14:30,448 [INFO] - Episode: 14/100, Reward: -16442.14, Avg AoI: 16.44, Steps: 1000
+2025-07-15 12:14:36,025 [INFO] - Episode: 15/100, Reward: -16977.00, Avg AoI: 16.98, Steps: 1000
+2025-07-15 12:14:41,753 [INFO] - Episode: 16/100, Reward: -17013.14, Avg AoI: 17.01, Steps: 1000
+2025-07-15 12:14:46,942 [INFO] - Episode: 17/100, Reward: -17822.00, Avg AoI: 17.82, Steps: 1000
+2025-07-15 12:14:52,147 [INFO] - Episode: 18/100, Reward: -16793.57, Avg AoI: 16.79, Steps: 1000
+2025-07-15 12:14:57,284 [INFO] - Episode: 19/100, Reward: -16971.00, Avg AoI: 16.97, Steps: 1000
+2025-07-15 12:15:02,471 [INFO] - Episode: 20/100, Reward: -17206.00, Avg AoI: 17.21, Steps: 1000
+2025-07-15 12:15:07,732 [INFO] - Episode: 21/100, Reward: -16290.29, Avg AoI: 16.29, Steps: 1000
+2025-07-15 12:15:12,852 [INFO] - Episode: 22/100, Reward: -16685.71, Avg AoI: 16.69, Steps: 1000
+2025-07-15 12:15:18,029 [INFO] - Episode: 23/100, Reward: -16966.00, Avg AoI: 16.97, Steps: 1000
+2025-07-15 12:15:23,200 [INFO] - Episode: 24/100, Reward: -17484.14, Avg AoI: 17.48, Steps: 1000
+2025-07-15 12:15:28,336 [INFO] - Episode: 25/100, Reward: -17411.86, Avg AoI: 17.41, Steps: 1000
+2025-07-15 12:15:33,533 [INFO] - Episode: 26/100, Reward: -17190.43, Avg AoI: 17.19, Steps: 1000
+2025-07-15 12:15:38,778 [INFO] - Episode: 27/100, Reward: -17203.43, Avg AoI: 17.20, Steps: 1000
+2025-07-15 12:15:43,966 [INFO] - Episode: 28/100, Reward: -16502.71, Avg AoI: 16.50, Steps: 1000
+2025-07-15 12:15:49,115 [INFO] - Episode: 29/100, Reward: -16639.14, Avg AoI: 16.64, Steps: 1000
+2025-07-15 12:15:54,671 [INFO] - Episode: 30/100, Reward: -16672.14, Avg AoI: 16.67, Steps: 1000
+2025-07-15 12:16:00,339 [INFO] - Episode: 31/100, Reward: -16881.57, Avg AoI: 16.88, Steps: 1000
+2025-07-15 12:16:05,841 [INFO] - Episode: 32/100, Reward: -16624.14, Avg AoI: 16.62, Steps: 1000
+2025-07-15 12:16:11,448 [INFO] - Episode: 33/100, Reward: -16524.71, Avg AoI: 16.52, Steps: 1000
+2025-07-15 12:16:17,086 [INFO] - Episode: 34/100, Reward: -17006.00, Avg AoI: 17.01, Steps: 1000
+2025-07-15 12:16:22,583 [INFO] - Episode: 35/100, Reward: -16679.57, Avg AoI: 16.68, Steps: 1000
+2025-07-15 12:16:28,167 [INFO] - Episode: 36/100, Reward: -16462.29, Avg AoI: 16.46, Steps: 1000
+2025-07-15 12:16:33,663 [INFO] - Episode: 37/100, Reward: -16037.43, Avg AoI: 16.04, Steps: 1000
+2025-07-15 12:16:39,232 [INFO] - Episode: 38/100, Reward: -16102.00, Avg AoI: 16.10, Steps: 1000
+2025-07-15 12:16:44,676 [INFO] - Episode: 39/100, Reward: -15885.29, Avg AoI: 15.89, Steps: 1000
+2025-07-15 12:16:50,000 [INFO] - Episode: 40/100, Reward: -15634.43, Avg AoI: 15.63, Steps: 1000
+2025-07-15 12:16:55,156 [INFO] - Episode: 41/100, Reward: -16817.43, Avg AoI: 16.82, Steps: 1000
+2025-07-15 12:17:00,370 [INFO] - Episode: 42/100, Reward: -16025.14, Avg AoI: 16.03, Steps: 1000
+2025-07-15 12:17:05,796 [INFO] - Episode: 43/100, Reward: -15673.71, Avg AoI: 15.67, Steps: 1000
+2025-07-15 12:17:11,013 [INFO] - Episode: 44/100, Reward: -16260.43, Avg AoI: 16.26, Steps: 1000
+2025-07-15 12:17:16,352 [INFO] - Episode: 45/100, Reward: -16324.29, Avg AoI: 16.32, Steps: 1000
+2025-07-15 12:17:21,581 [INFO] - Episode: 46/100, Reward: -16251.57, Avg AoI: 16.25, Steps: 1000
+2025-07-15 12:17:26,789 [INFO] - Episode: 47/100, Reward: -16923.43, Avg AoI: 16.92, Steps: 1000
+2025-07-15 12:17:31,985 [INFO] - Episode: 48/100, Reward: -16727.43, Avg AoI: 16.73, Steps: 1000
+2025-07-15 12:17:37,206 [INFO] - Episode: 49/100, Reward: -17402.43, Avg AoI: 17.40, Steps: 1000
+2025-07-15 12:17:42,590 [INFO] - Episode: 50/100, Reward: -16502.57, Avg AoI: 16.50, Steps: 1000
+2025-07-15 12:17:47,774 [INFO] - Episode: 51/100, Reward: -15404.71, Avg AoI: 15.40, Steps: 1000
+2025-07-15 12:17:53,136 [INFO] - Episode: 52/100, Reward: -16210.43, Avg AoI: 16.21, Steps: 1000
+2025-07-15 12:17:58,838 [INFO] - Episode: 53/100, Reward: -16315.57, Avg AoI: 16.32, Steps: 1000
+2025-07-15 12:18:04,558 [INFO] - Episode: 54/100, Reward: -15386.29, Avg AoI: 15.39, Steps: 1000
+2025-07-15 12:18:10,119 [INFO] - Episode: 55/100, Reward: -15512.14, Avg AoI: 15.51, Steps: 1000
+2025-07-15 12:18:15,748 [INFO] - Episode: 56/100, Reward: -15742.00, Avg AoI: 15.74, Steps: 1000
+2025-07-15 12:18:21,379 [INFO] - Episode: 57/100, Reward: -15645.00, Avg AoI: 15.65, Steps: 1000
+2025-07-15 12:18:27,020 [INFO] - Episode: 58/100, Reward: -16481.14, Avg AoI: 16.48, Steps: 1000
+2025-07-15 12:18:32,520 [INFO] - Episode: 59/100, Reward: -15702.43, Avg AoI: 15.70, Steps: 1000
+2025-07-15 12:18:38,279 [INFO] - Episode: 60/100, Reward: -15916.00, Avg AoI: 15.92, Steps: 1000
+2025-07-15 12:18:43,951 [INFO] - Episode: 61/100, Reward: -15890.86, Avg AoI: 15.89, Steps: 1000
+2025-07-15 12:18:49,447 [INFO] - Episode: 62/100, Reward: -15595.86, Avg AoI: 15.60, Steps: 1000
+2025-07-15 12:18:54,873 [INFO] - Episode: 63/100, Reward: -15173.57, Avg AoI: 15.17, Steps: 1000
+2025-07-15 12:19:00,168 [INFO] - Episode: 64/100, Reward: -15536.14, Avg AoI: 15.54, Steps: 1000
+2025-07-15 12:19:05,373 [INFO] - Episode: 65/100, Reward: -16339.14, Avg AoI: 16.34, Steps: 1000
+2025-07-15 12:19:10,573 [INFO] - Episode: 66/100, Reward: -15505.14, Avg AoI: 15.51, Steps: 1000
+2025-07-15 12:19:15,927 [INFO] - Episode: 67/100, Reward: -15650.57, Avg AoI: 15.65, Steps: 1000
+2025-07-15 12:19:21,075 [INFO] - Episode: 68/100, Reward: -15390.57, Avg AoI: 15.39, Steps: 1000
+2025-07-15 12:19:26,284 [INFO] - Episode: 69/100, Reward: -16348.14, Avg AoI: 16.35, Steps: 1000
+2025-07-15 12:19:31,437 [INFO] - Episode: 70/100, Reward: -16339.86, Avg AoI: 16.34, Steps: 1000
+2025-07-15 12:19:36,636 [INFO] - Episode: 71/100, Reward: -16525.29, Avg AoI: 16.53, Steps: 1000
+2025-07-15 12:19:41,905 [INFO] - Episode: 72/100, Reward: -16023.43, Avg AoI: 16.02, Steps: 1000
+2025-07-15 12:19:47,017 [INFO] - Episode: 73/100, Reward: -16714.00, Avg AoI: 16.71, Steps: 1000
+2025-07-15 12:19:52,189 [INFO] - Episode: 74/100, Reward: -15434.29, Avg AoI: 15.43, Steps: 1000
+2025-07-15 12:19:57,424 [INFO] - Episode: 75/100, Reward: -16130.86, Avg AoI: 16.13, Steps: 1000
+2025-07-15 12:20:02,797 [INFO] - Episode: 76/100, Reward: -15622.57, Avg AoI: 15.62, Steps: 1000
+2025-07-15 12:20:08,020 [INFO] - Episode: 77/100, Reward: -16243.86, Avg AoI: 16.24, Steps: 1000
+2025-07-15 12:20:13,522 [INFO] - Episode: 78/100, Reward: -16481.71, Avg AoI: 16.48, Steps: 1000
+2025-07-15 12:20:19,052 [INFO] - Episode: 79/100, Reward: -15887.14, Avg AoI: 15.89, Steps: 1000
+2025-07-15 12:20:24,674 [INFO] - Episode: 80/100, Reward: -15787.14, Avg AoI: 15.79, Steps: 1000
+2025-07-15 12:20:30,055 [INFO] - Episode: 81/100, Reward: -16159.57, Avg AoI: 16.16, Steps: 1000
+2025-07-15 12:20:35,598 [INFO] - Episode: 82/100, Reward: -16327.86, Avg AoI: 16.33, Steps: 1000
+2025-07-15 12:20:41,099 [INFO] - Episode: 83/100, Reward: -15819.57, Avg AoI: 15.82, Steps: 1000
+2025-07-15 12:20:46,672 [INFO] - Episode: 84/100, Reward: -15301.43, Avg AoI: 15.30, Steps: 1000
+2025-07-15 12:20:52,146 [INFO] - Episode: 85/100, Reward: -15621.43, Avg AoI: 15.62, Steps: 1000
+2025-07-15 12:20:57,784 [INFO] - Episode: 86/100, Reward: -16064.71, Avg AoI: 16.06, Steps: 1000
+2025-07-15 12:21:03,184 [INFO] - Episode: 87/100, Reward: -15675.57, Avg AoI: 15.68, Steps: 1000
+2025-07-15 12:21:08,358 [INFO] - Episode: 88/100, Reward: -16698.57, Avg AoI: 16.70, Steps: 1000
+2025-07-15 12:21:13,537 [INFO] - Episode: 89/100, Reward: -15906.57, Avg AoI: 15.91, Steps: 1000
+2025-07-15 12:22:12,068 [INFO] - Training finished.
