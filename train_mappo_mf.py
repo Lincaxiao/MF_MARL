@@ -63,6 +63,7 @@ class MAPPO_MF_Trainer:
         self.env = env
         self.config = config
         self.use_global = config.get('use_global', True)
+        self.use_mean_field = config.get('use_mean_field', True)
         self.device = 'cpu'
 
         # 维度
@@ -71,7 +72,7 @@ class MAPPO_MF_Trainer:
         self.n_agents = env.n_agents
         self.user_obs_dim = len(env._get_user_obs(0))
         self.server_obs_dim = len(env._get_server_obs(0))
-        self.mf_dim = len(env.get_mean_field_state())
+        self.mf_dim = len(env.get_mean_field_state()) if self.use_mean_field else 0
         self.global_state_dim = len(env.get_global_state())
 
         # Actor
@@ -125,7 +126,11 @@ class MAPPO_MF_Trainer:
             rew_buf, done_buf = [], []
 
             for t in range(self.config['episode_length']):
-                mf = self.env.get_mean_field_state()
+                # 根据是否使用 Mean-Field 决定均场输入
+                if self.use_mean_field:
+                    mf = self.env.get_mean_field_state()
+                else:
+                    mf = np.zeros(self.mf_dim, dtype=np.float32)
                 mf_buf.append(mf)
                 gstate = self.env.get_global_state()
                 gstate_buf.append(gstate)
@@ -304,10 +309,10 @@ if __name__ == '__main__':
         'n_servers': 3 * 3,
         'batch_proc_time': {'base': 3, 'per_task': 2},
         'max_batch_size': 3,
-        'num_episodes': 1000,
-        'episode_length': 400,
-        'actor_lr': 1e-5,
-        'critic_lr': 1e-5,
+        'num_episodes': 500,
+        'episode_length': 1000,
+        'actor_lr': 4e-5,
+        'critic_lr': 4e-5,
         'gamma': 0.99,
         'gae_lambda': 0.95,
         'clip_ratio': 0.2,
@@ -315,13 +320,16 @@ if __name__ == '__main__':
         'mini_batch_size': 128,
         'entropy_coeff': 0.01,
         'max_grad_norm': 1.0,
-        # 'use_global': False,
-        'use_global': True,  # 是否使用全局状态作为 Critic 输入
-        'log_dir': '',  # 占位，稍后根据参数自动生成
+        # 'use_global': False,  # 是否使用全局状态作为 Critic 输入
+        'use_global': True, # 两行便于切换
+        'use_mean_field': False,  # 是否将 Mean-Field 作为额外输入
+        # 'use_mean_field': True, # 两行便于切换
+        'log_dir': '',  # 占位，根据参数自动生成
     }
 
-    # 根据配置动态生成日志目录，格式: logs/mappo_mf_⟨Nuser⟩_⟨Nserver⟩_⟨Global|Local⟩_⟨Lr⟩
-    suffix = f"{config['n_users']}_{config['n_servers']}_{'Global' if config['use_global'] else 'Local'}_{config['actor_lr']}"
+    # 根据配置动态生成日志目录，格式: logs/mappo_mf_⟨Nuser⟩_⟨Nserver⟩_⟨Global|Local⟩_⟨MF|NoMF⟩_⟨Lr⟩
+    mf_tag = 'MF' if config.get('use_mean_field', True) else 'NoMF'
+    suffix = f"{config['n_users']}_{config['n_servers']}_{'Global' if config['use_global'] else 'Local'}_{mf_tag}_{config['actor_lr']}"
     config['log_dir'] = f"logs/mappo_mf_{suffix}"
 
     setup_logger(config['log_dir'])

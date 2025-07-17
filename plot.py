@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import matplotlib.pyplot as plt 
 def visualize_avg_aoi(log_file: str, smooth_window: int = 1):
     """读取指定日志文件并绘制 Avg AoI 曲线，可选滑动平均平滑。
@@ -157,9 +158,11 @@ def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf:
     png_path = os.path.join(save_dir, f'avg_aoi_compare{suffix}.png')
     plt.savefig(png_path, dpi=300)
     print(f"已保存比较曲线图到 {png_path}")
-
-visualize_avg_aoi("logs/mappo_mf_21_9_Global_1e-05/training.log", 6)
-visualize_avg_aoi("logs/mappo_mf_21_9_Global_4e-05/training.log",6)
+# 每 60 秒调用一次
+while True:
+    visualize_avg_aoi("logs/mappo_mf_21_9_Global_NoMF_1e-05/training.log", 3)
+    visualize_avg_aoi("logs/mappo_mf_21_9_Global_NoMF_4e-05/training.log",3)
+    time.sleep(60)
 # visualize_compare_avg_aoi("logs/mappo_20250715_114328/",
 #                           "logs/mappo_mf_20250715_121311/",
 #                           "logs/mappo_mf_20250715_125350/",

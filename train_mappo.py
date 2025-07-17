@@ -212,8 +212,9 @@ class MAPPO_Trainer:
             # 日志记录
             # ----------------------------------------------------------
             avg_aoi = episode_aoi / len(rew_buf)
+            completed_tasks_this_episode = len(self.env.completed_tasks_log)
             logging.info(f"Episode: {episode + 1}/{self.config['num_episodes']}, "
-                         f"Reward: {episode_reward:.2f}, Avg AoI: {avg_aoi:.2f}, Steps: {len(rew_buf)}")
+                         f"Reward: {episode_reward:.2f}, Avg AoI: {avg_aoi:.2f}, Completed Tasks: {completed_tasks_this_episode}")
 
     # ------------------------------------------------------------------
     # 任务完成日志保存
@@ -247,23 +248,27 @@ class MAPPO_Trainer:
 if __name__ == '__main__':
     # --- 配置 ---
     config = {
-        'n_users': 7,
-        'n_servers': 3,
+        'n_users': 7 * 3,
+        'n_servers': 3 * 3,
         'batch_proc_time': {'base': 3, 'per_task': 2},
         'max_batch_size': 3,
-        'num_episodes': 100,
+        'num_episodes': 500,
         'episode_length': 1000,
-        'actor_lr': 1e-4,
-        'critic_lr': 1e-4,
+        'actor_lr': 1e-5,
+        'critic_lr': 1e-5,
         'gamma': 0.99,
         'gae_lambda': 0.95,
         'clip_ratio': 0.2,
         'update_epochs': 4,
-        'mini_batch_size': 256,
+        'mini_batch_size': 128,
         'entropy_coeff': 0.01,
         'max_grad_norm': 1.0,
-        'log_dir': f'logs/mappo_{datetime.now().strftime("%Y%m%d_%H%M%S")}',
+        'log_dir': '',  # 占位，稍后根据参数自动生成
     }
+
+    # 动态生成日志目录，格式: logs/mappo_<Nuser>_<Nserver>_<Lr>
+    suffix = f"{config['n_users']}_{config['n_servers']}_{config['actor_lr']}"
+    config['log_dir'] = f"logs/mappo_{suffix}"
 
     setup_logger(config['log_dir'])
 
