@@ -1,7 +1,10 @@
 import os
 import re
 import time
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 def visualize_avg_aoi(log_file: str, smooth_window: int = 1):
     """读取指定日志文件并绘制 Avg AoI 曲线，可选滑动平均平滑。
 
@@ -26,27 +29,21 @@ def visualize_avg_aoi(log_file: str, smooth_window: int = 1):
                 ep_idx = int(match.group(1))
                 aoi_val = float(match.group(3))
                 episodes.append(ep_idx)
-                avg_aois.append(aoi_val)
+                if aoi_val <= 30:
+                    avg_aois.append(aoi_val)
+                else:
+                    avg_aois.append(np.nan)  # 使用 nan 代替，以在图中产生断点
 
     if not episodes:
         print("未解析到任何 Avg AoI 信息。")
         return
 
-    # 打印简单统计（取原始数据，不使用平滑值）
-    # print("---- 平均 AoI 变化 (原始) ----")
-    # for ep, aoi in zip(episodes, avg_aois):
-    #     print(f"Episode {ep}: Avg AoI {aoi:.2f}")
-
     # -------------------- 平滑处理 --------------------
     plot_eps, plot_aois = episodes, avg_aois
     if smooth_window > 1:
-        if smooth_window > len(avg_aois):
-            print(f"smooth_window({smooth_window}) 大于数据长度，调整为 {len(avg_aois)}")
-            smooth_window = len(avg_aois)
-        import numpy as np
-        kernel = np.ones(smooth_window) / smooth_window
-        smoothed = np.convolve(avg_aois, kernel, mode='valid')
-        plot_eps = episodes[smooth_window - 1:]
+        # 使用 pandas 进行滑动平均，可以更好地处理 NaN 值
+        aoi_series = pd.Series(avg_aois)
+        smoothed = aoi_series.rolling(window=smooth_window, min_periods=1, center=False).mean()
         plot_aois = smoothed.tolist()
         print(f"---- 使用窗口 {smooth_window} 的滑动平均后，数据点数: {len(plot_aois)} ----")
 
@@ -100,21 +97,18 @@ def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf:
                 m = pattern.search(line)
                 if m:
                     eps.append(int(m.group(1)))
-                    aois.append(float(m.group(3)))
+                    aoi_val = float(m.group(3))
+                    if aoi_val <= 30:
+                        aois.append(aoi_val)
+                    else:
+                        aois.append(np.nan)  # 使用 nan 代替
         if not eps:
             return [], []
 
         # 平滑
         if smooth_window > 1:
-            import numpy as np
-            if smooth_window > len(aois):
-                print(f"smooth_window({smooth_window}) 大于数据长度，调整为 {len(aois)}")
-                sw = len(aois)
-            else:
-                sw = smooth_window
-            kernel = np.ones(sw) / sw
-            smoothed = np.convolve(aois, kernel, mode='valid')
-            eps = eps[sw - 1:]
+            aoi_series = pd.Series(aois)
+            smoothed = aoi_series.rolling(window=smooth_window, min_periods=1, center=False).mean()
             aois = smoothed.tolist()
         return eps, aois
 
@@ -160,10 +154,10 @@ def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf:
     print(f"已保存比较曲线图到 {png_path}")
 # 每 60 秒调用一次
 while True:
-    visualize_avg_aoi("logs/mappo_mf_21_9_Global_NoMF_1e-05/training.log", 3)
-    visualize_avg_aoi("logs/mappo_mf_21_9_Global_NoMF_4e-05/training.log",3)
-    time.sleep(60)
-# visualize_compare_avg_aoi("logs/mappo_20250715_114328/",
-#                           "logs/mappo_mf_20250715_121311/",
-#                           "logs/mappo_mf_20250715_125350/",
-#                           1)
+    visualize_avg_aoi("logs/mappo_mf_35_15_Shared_Local_MF_GMM2_4e-05/training.log", 3)
+    # visualize_avg_aoi("logs/mappo_mf_21_9_Global_NoMF_4e-05/training.log",3)
+    time.sleep(20)
+# visualize_compare_avg_aoi("logs/mappo_mf_35_15_Global_NoMF_4e-05/",
+#                         "logs/mappo_mf_35_15_Global_MF_4e-05/",
+#                         "logs/mappo_mf_35_15_Local_MF_2e-05/",
+#                         3)

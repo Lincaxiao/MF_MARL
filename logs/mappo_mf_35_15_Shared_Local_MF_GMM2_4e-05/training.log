@@ -1,0 +1,41 @@
+2025-07-19 21:49:31,016 [INFO] - Logger initialized.
+2025-07-19 21:49:31,016 [INFO] - --- Training Configuration ---
+2025-07-19 21:49:31,016 [INFO] - n_users: 35
+2025-07-19 21:49:31,016 [INFO] - n_servers: 15
+2025-07-19 21:49:31,016 [INFO] - batch_proc_time: {'base': 3, 'per_task': 2}
+2025-07-19 21:49:31,016 [INFO] - max_batch_size: 3
+2025-07-19 21:49:31,016 [INFO] - num_episodes: 500
+2025-07-19 21:49:31,016 [INFO] - episode_length: 1000
+2025-07-19 21:49:31,017 [INFO] - actor_lr: 4e-05
+2025-07-19 21:49:31,017 [INFO] - critic_lr: 4e-05
+2025-07-19 21:49:31,017 [INFO] - gamma: 0.99
+2025-07-19 21:49:31,017 [INFO] - gae_lambda: 0.95
+2025-07-19 21:49:31,017 [INFO] - clip_ratio: 0.2
+2025-07-19 21:49:31,017 [INFO] - update_epochs: 4
+2025-07-19 21:49:31,017 [INFO] - mini_batch_size: 128
+2025-07-19 21:49:31,017 [INFO] - entropy_coeff: 0.01
+2025-07-19 21:49:31,017 [INFO] - max_grad_norm: 1.0
+2025-07-19 21:49:31,017 [INFO] - use_global: False
+2025-07-19 21:49:31,017 [INFO] - use_mean_field: True
+2025-07-19 21:49:31,017 [INFO] - critic_warmup_epochs: 0
+2025-07-19 21:49:31,018 [INFO] - gmm_config: {'n_components': 2, 'min_samples': 100, 'use_gmm': True, 'regularization': 1e-06}
+2025-07-19 21:49:31,018 [INFO] - log_dir: logs/mappo_mf_35_15_Shared_Local_MF_GMM2_4e-05
+2025-07-19 21:49:31,018 [INFO] - --------------------------
+2025-07-19 21:49:32,177 [INFO] - MAPPO-MF Trainer Initialized with Shared Networks.
+2025-07-19 21:49:32,177 [INFO] - Device: cpu
+2025-07-19 21:49:32,178 [INFO] - User Obs Dim (including all servers): 47, Server Obs Dim: 3
+2025-07-19 21:49:32,178 [INFO] - Mean-field Dim: 10
+2025-07-19 21:49:32,178 [INFO] - Use Global Critic: False
+2025-07-19 21:49:32,178 [INFO] - Use Mean Field: True
+2025-07-19 21:50:15,441 [INFO] - Episode: 1/500, Reward: -18875.54, Avg AoI: 18.88, Completed Tasks: 2693
+2025-07-19 21:50:52,868 [INFO] - Episode: 2/500, Reward: -20011.97, Avg AoI: 20.01, Completed Tasks: 2581
+2025-07-19 21:51:33,622 [INFO] - Episode: 3/500, Reward: -19033.34, Avg AoI: 19.03, Completed Tasks: 2675
+2025-07-19 21:52:06,848 [INFO] - Episode: 4/500, Reward: -20141.37, Avg AoI: 20.14, Completed Tasks: 2553
+2025-07-19 21:52:47,029 [INFO] - Episode: 5/500, Reward: -20091.89, Avg AoI: 20.09, Completed Tasks: 2554
+2025-07-19 21:53:27,726 [INFO] - Episode: 6/500, Reward: -20310.17, Avg AoI: 20.31, Completed Tasks: 2514
+2025-07-19 21:54:10,052 [INFO] - Episode: 7/500, Reward: -21229.09, Avg AoI: 21.23, Completed Tasks: 2414
+2025-07-19 21:54:50,723 [INFO] - Episode: 8/500, Reward: -21287.29, Avg AoI: 21.29, Completed Tasks: 2399
+2025-07-19 21:55:28,912 [INFO] - Episode: 9/500, Reward: -21522.06, Avg AoI: 21.52, Completed Tasks: 2388
+2025-07-19 21:56:11,896 [INFO] - Episode: 10/500, Reward: -20818.71, Avg AoI: 20.82, Completed Tasks: 2430
+2025-07-19 21:56:51,679 [INFO] - Episode: 11/500, Reward: -22132.60, Avg AoI: 22.13, Completed Tasks: 2344
+2025-07-19 21:57:32,686 [INFO] - Episode: 12/500, Reward: -21949.14, Avg AoI: 21.95, Completed Tasks: 2371

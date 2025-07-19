@@ -1,0 +1,104 @@
+2025-07-19 00:14:19,492 [INFO] - Logger initialized.
+2025-07-19 00:14:19,493 [INFO] - --- Training Configuration ---
+2025-07-19 00:14:19,493 [INFO] - n_users: 35
+2025-07-19 00:14:19,494 [INFO] - n_servers: 15
+2025-07-19 00:14:19,494 [INFO] - batch_proc_time: {'base': 3, 'per_task': 2}
+2025-07-19 00:14:19,494 [INFO] - max_batch_size: 3
+2025-07-19 00:14:19,494 [INFO] - num_episodes: 500
+2025-07-19 00:14:19,494 [INFO] - episode_length: 1000
+2025-07-19 00:14:19,494 [INFO] - actor_lr: 2e-05
+2025-07-19 00:14:19,494 [INFO] - critic_lr: 0.0001
+2025-07-19 00:14:19,495 [INFO] - gamma: 0.99
+2025-07-19 00:14:19,495 [INFO] - gae_lambda: 0.95
+2025-07-19 00:14:19,495 [INFO] - clip_ratio: 0.2
+2025-07-19 00:14:19,495 [INFO] - update_epochs: 4
+2025-07-19 00:14:19,496 [INFO] - mini_batch_size: 128
+2025-07-19 00:14:19,496 [INFO] - entropy_coeff: 0.01
+2025-07-19 00:14:19,496 [INFO] - max_grad_norm: 1.0
+2025-07-19 00:14:19,496 [INFO] - use_global: False
+2025-07-19 00:14:19,496 [INFO] - use_mean_field: True
+2025-07-19 00:14:19,496 [INFO] - critic_warmup_epochs: 20
+2025-07-19 00:14:19,496 [INFO] - log_dir: logs/mappo_mf_35_15_Local_MF_2e-05
+2025-07-19 00:14:19,497 [INFO] - --------------------------
+2025-07-19 00:14:21,303 [INFO] - MAPPO-MF Trainer Initialized.
+2025-07-19 00:14:21,303 [INFO] - Device: cpu
+2025-07-19 00:14:21,303 [INFO] - User Obs Dim: 2, Server Obs Dim: 3
+2025-07-19 00:14:21,303 [INFO] - Mean-field Dim: 21
+2025-07-19 00:14:21,305 [INFO] - Use Global Critic: False
+2025-07-19 00:23:05,994 [INFO] - Episode: 1/500, Reward: -25258.03, Avg AoI: 25.26, Completed Tasks: 2732
+2025-07-19 00:23:34,299 [INFO] - Episode: 2/500, Reward: -18018.37, Avg AoI: 18.02, Completed Tasks: 2781
+2025-07-19 00:24:01,968 [INFO] - Episode: 3/500, Reward: -18067.29, Avg AoI: 18.07, Completed Tasks: 2770
+2025-07-19 00:24:29,729 [INFO] - Episode: 4/500, Reward: -18190.37, Avg AoI: 18.19, Completed Tasks: 2736
+2025-07-19 00:24:58,541 [INFO] - Episode: 5/500, Reward: -18444.71, Avg AoI: 18.44, Completed Tasks: 2735
+2025-07-19 00:25:26,358 [INFO] - Episode: 6/500, Reward: -18506.46, Avg AoI: 18.51, Completed Tasks: 2723
+2025-07-19 00:25:53,914 [INFO] - Episode: 7/500, Reward: -18071.89, Avg AoI: 18.07, Completed Tasks: 2773
+2025-07-19 00:26:21,603 [INFO] - Episode: 8/500, Reward: -18552.69, Avg AoI: 18.55, Completed Tasks: 2727
+2025-07-19 00:26:49,147 [INFO] - Episode: 9/500, Reward: -18732.26, Avg AoI: 18.73, Completed Tasks: 2721
+2025-07-19 00:27:16,599 [INFO] - Episode: 10/500, Reward: -20414.89, Avg AoI: 20.41, Completed Tasks: 2608
+2025-07-19 00:27:43,963 [INFO] - Episode: 11/500, Reward: -20227.06, Avg AoI: 20.23, Completed Tasks: 2605
+2025-07-19 00:28:13,093 [INFO] - Episode: 12/500, Reward: -20688.29, Avg AoI: 20.69, Completed Tasks: 2604
+2025-07-19 00:28:46,026 [INFO] - Episode: 13/500, Reward: -20116.57, Avg AoI: 20.12, Completed Tasks: 2611
+2025-07-19 00:29:17,625 [INFO] - Episode: 14/500, Reward: -314793.00, Avg AoI: 314.79, Completed Tasks: 689
+2025-07-19 00:29:46,899 [INFO] - Episode: 15/500, Reward: -185180.60, Avg AoI: 185.18, Completed Tasks: 1098
+2025-07-19 00:30:15,094 [INFO] - Episode: 16/500, Reward: -36414.91, Avg AoI: 36.41, Completed Tasks: 2379
+2025-07-19 00:30:43,196 [INFO] - Episode: 17/500, Reward: -171793.57, Avg AoI: 171.79, Completed Tasks: 1271
+2025-07-19 00:31:10,679 [INFO] - Episode: 18/500, Reward: -74350.37, Avg AoI: 74.35, Completed Tasks: 1677
+2025-07-19 00:31:39,102 [INFO] - Episode: 19/500, Reward: -164669.89, Avg AoI: 164.67, Completed Tasks: 1243
+2025-07-19 00:32:06,905 [INFO] - Episode: 20/500, Reward: -308343.20, Avg AoI: 308.34, Completed Tasks: 601
+2025-07-19 00:32:34,501 [INFO] - Episode: 21/500, Reward: -202997.37, Avg AoI: 203.00, Completed Tasks: 1261
+2025-07-19 00:33:01,843 [INFO] - Episode: 22/500, Reward: -151635.26, Avg AoI: 151.64, Completed Tasks: 1458
+2025-07-19 00:33:29,702 [INFO] - Episode: 23/500, Reward: -233041.86, Avg AoI: 233.04, Completed Tasks: 851
+2025-07-19 00:33:57,644 [INFO] - Episode: 24/500, Reward: -377582.80, Avg AoI: 377.58, Completed Tasks: 400
+2025-07-19 00:34:26,765 [INFO] - Episode: 25/500, Reward: -377859.63, Avg AoI: 377.86, Completed Tasks: 360
+2025-07-19 00:34:55,926 [INFO] - Episode: 26/500, Reward: -301081.60, Avg AoI: 301.08, Completed Tasks: 798
+2025-07-19 00:35:24,001 [INFO] - Episode: 27/500, Reward: -414757.69, Avg AoI: 414.76, Completed Tasks: 287
+2025-07-19 00:35:51,065 [INFO] - Episode: 28/500, Reward: -273946.49, Avg AoI: 273.95, Completed Tasks: 1024
+2025-07-19 00:36:18,509 [INFO] - Episode: 29/500, Reward: -365315.11, Avg AoI: 365.32, Completed Tasks: 439
+2025-07-19 00:36:46,458 [INFO] - Episode: 30/500, Reward: -426460.54, Avg AoI: 426.46, Completed Tasks: 279
+2025-07-19 00:37:15,080 [INFO] - Episode: 31/500, Reward: -395251.66, Avg AoI: 395.25, Completed Tasks: 305
+2025-07-19 00:37:43,241 [INFO] - Episode: 32/500, Reward: -419384.09, Avg AoI: 419.38, Completed Tasks: 263
+2025-07-19 00:38:12,601 [INFO] - Episode: 33/500, Reward: -410060.09, Avg AoI: 410.06, Completed Tasks: 301
+2025-07-19 00:38:42,770 [INFO] - Episode: 34/500, Reward: -423875.91, Avg AoI: 423.88, Completed Tasks: 259
+2025-07-19 00:39:12,329 [INFO] - Episode: 35/500, Reward: -432209.03, Avg AoI: 432.21, Completed Tasks: 260
+2025-07-19 00:39:42,076 [INFO] - Episode: 36/500, Reward: -363820.06, Avg AoI: 363.82, Completed Tasks: 684
+2025-07-19 00:40:12,034 [INFO] - Episode: 37/500, Reward: -315289.80, Avg AoI: 315.29, Completed Tasks: 832
+2025-07-19 00:40:41,728 [INFO] - Episode: 38/500, Reward: -344058.31, Avg AoI: 344.06, Completed Tasks: 814
+2025-07-19 00:41:12,225 [INFO] - Episode: 39/500, Reward: -312465.57, Avg AoI: 312.47, Completed Tasks: 890
+2025-07-19 00:41:42,367 [INFO] - Episode: 40/500, Reward: -300255.46, Avg AoI: 300.26, Completed Tasks: 972
+2025-07-19 00:42:11,114 [INFO] - Episode: 41/500, Reward: -416514.71, Avg AoI: 416.51, Completed Tasks: 316
+2025-07-19 00:42:48,386 [INFO] - Episode: 42/500, Reward: -314401.86, Avg AoI: 314.40, Completed Tasks: 892
+2025-07-19 00:43:27,194 [INFO] - Episode: 43/500, Reward: -346762.71, Avg AoI: 346.76, Completed Tasks: 620
+2025-07-19 00:44:05,065 [INFO] - Episode: 44/500, Reward: -310855.40, Avg AoI: 310.86, Completed Tasks: 930
+2025-07-19 00:44:39,001 [INFO] - Episode: 45/500, Reward: -396294.66, Avg AoI: 396.29, Completed Tasks: 352
+2025-07-19 00:45:08,038 [INFO] - Episode: 46/500, Reward: -406779.80, Avg AoI: 406.78, Completed Tasks: 308
+2025-07-19 00:45:35,429 [INFO] - Episode: 47/500, Reward: -309240.29, Avg AoI: 309.24, Completed Tasks: 879
+2025-07-19 00:46:02,749 [INFO] - Episode: 48/500, Reward: -307497.57, Avg AoI: 307.50, Completed Tasks: 975
+2025-07-19 00:46:30,045 [INFO] - Episode: 49/500, Reward: -326221.57, Avg AoI: 326.22, Completed Tasks: 695
+2025-07-19 00:46:57,321 [INFO] - Episode: 50/500, Reward: -280918.89, Avg AoI: 280.92, Completed Tasks: 1028
+2025-07-19 00:47:24,741 [INFO] - Episode: 51/500, Reward: -425089.66, Avg AoI: 425.09, Completed Tasks: 234
+2025-07-19 00:47:52,716 [INFO] - Episode: 52/500, Reward: -320050.83, Avg AoI: 320.05, Completed Tasks: 845
+2025-07-19 00:48:20,178 [INFO] - Episode: 53/500, Reward: -288410.63, Avg AoI: 288.41, Completed Tasks: 972
+2025-07-19 00:48:47,596 [INFO] - Episode: 54/500, Reward: -258848.34, Avg AoI: 258.85, Completed Tasks: 942
+2025-07-19 00:49:15,157 [INFO] - Episode: 55/500, Reward: -411202.49, Avg AoI: 411.20, Completed Tasks: 258
+2025-07-19 00:49:50,781 [INFO] - Episode: 56/500, Reward: -430148.57, Avg AoI: 430.15, Completed Tasks: 228
+2025-07-19 00:50:27,326 [INFO] - Episode: 57/500, Reward: -411828.37, Avg AoI: 411.83, Completed Tasks: 283
+2025-07-19 00:50:57,766 [INFO] - Episode: 58/500, Reward: -400941.51, Avg AoI: 400.94, Completed Tasks: 332
+2025-07-19 00:51:25,675 [INFO] - Episode: 59/500, Reward: -406484.77, Avg AoI: 406.48, Completed Tasks: 327
+2025-07-19 00:51:54,076 [INFO] - Episode: 60/500, Reward: -421505.17, Avg AoI: 421.51, Completed Tasks: 245
+2025-07-19 00:52:22,676 [INFO] - Episode: 61/500, Reward: -256818.06, Avg AoI: 256.82, Completed Tasks: 990
+2025-07-19 00:52:50,162 [INFO] - Episode: 62/500, Reward: -409052.63, Avg AoI: 409.05, Completed Tasks: 292
+2025-07-19 00:53:17,347 [INFO] - Episode: 63/500, Reward: -381666.29, Avg AoI: 381.67, Completed Tasks: 399
+2025-07-19 00:53:44,492 [INFO] - Episode: 64/500, Reward: -384491.46, Avg AoI: 384.49, Completed Tasks: 371
+2025-07-19 00:54:11,698 [INFO] - Episode: 65/500, Reward: -256984.03, Avg AoI: 256.98, Completed Tasks: 1081
+2025-07-19 00:54:38,953 [INFO] - Episode: 66/500, Reward: -248136.86, Avg AoI: 248.14, Completed Tasks: 1033
+2025-07-19 00:55:10,484 [INFO] - Episode: 67/500, Reward: -291981.34, Avg AoI: 291.98, Completed Tasks: 701
+2025-07-19 00:55:45,342 [INFO] - Episode: 68/500, Reward: -366995.91, Avg AoI: 367.00, Completed Tasks: 434
+2025-07-19 00:56:21,111 [INFO] - Episode: 69/500, Reward: -293043.29, Avg AoI: 293.04, Completed Tasks: 923
+2025-07-19 00:56:56,129 [INFO] - Episode: 70/500, Reward: -265756.49, Avg AoI: 265.76, Completed Tasks: 937
+2025-07-19 00:57:31,517 [INFO] - Episode: 71/500, Reward: -406431.31, Avg AoI: 406.43, Completed Tasks: 283
+2025-07-19 00:58:02,840 [INFO] - Episode: 72/500, Reward: -407778.94, Avg AoI: 407.78, Completed Tasks: 266
+2025-07-19 00:58:32,089 [INFO] - Episode: 73/500, Reward: -380441.54, Avg AoI: 380.44, Completed Tasks: 456
+2025-07-19 00:59:02,142 [INFO] - Episode: 74/500, Reward: -422543.97, Avg AoI: 422.54, Completed Tasks: 284
+2025-07-19 00:59:31,470 [INFO] - Episode: 75/500, Reward: -397655.26, Avg AoI: 397.66, Completed Tasks: 322
+2025-07-19 01:00:01,679 [INFO] - Episode: 76/500, Reward: -400591.06, Avg AoI: 400.59, Completed Tasks: 362
+2025-07-19 01:00:30,928 [INFO] - Episode: 77/500, Reward: -398401.83, Avg AoI: 398.40, Completed Tasks: 266
