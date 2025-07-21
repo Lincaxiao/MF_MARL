@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-def visualize_avg_aoi(log_file: str, smooth_window: int = 1):
+def visualize_avg_aoi(log_file: str, smooth_window: int = 1, max_aoi: float = 30):
     """读取指定日志文件并绘制 Avg AoI 曲线，可选滑动平均平滑。
 
     参数
@@ -29,7 +29,7 @@ def visualize_avg_aoi(log_file: str, smooth_window: int = 1):
                 ep_idx = int(match.group(1))
                 aoi_val = float(match.group(3))
                 episodes.append(ep_idx)
-                if aoi_val <= 30:
+                if aoi_val <= max_aoi:
                     avg_aois.append(aoi_val)
                 else:
                     avg_aois.append(np.nan)  # 使用 nan 代替，以在图中产生断点
@@ -53,7 +53,7 @@ def visualize_avg_aoi(log_file: str, smooth_window: int = 1):
         plt.plot(plot_eps, plot_aois, marker='o', linewidth=1.0)
         plt.xlabel('Episode')
         plt.ylabel('Average AoI')
-        plt.title('Average AoI over Episodes')
+        plt.title(f'Average AoI (≤{max_aoi}) over Episodes')
         plt.grid(True, linestyle='--', alpha=0.5)
         plt.tight_layout()
 
@@ -69,8 +69,15 @@ def visualize_avg_aoi(log_file: str, smooth_window: int = 1):
     else:
         print("未安装 matplotlib")
 
-def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf: str, smooth_window: int = 1):
-    """在同一张图中比较三种实验 (Global, Global+MF, Local+MF) 的 Avg AoI 曲线。
+def visualize_compare_avg_aoi(
+    dir_global: str,
+    dir_global_mf: str,
+    dir_local_no_mf: str,
+    dir_local_mf: str,
+    smooth_window: int = 1,
+    max_aoi: float = 30,
+):
+    """在同一张图中比较四种实验 (Global, Global+MF, Local, Local+MF) 的 Avg AoI 曲线。
 
     参数
     ------
@@ -78,6 +85,8 @@ def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf:
         不带均场的 Global 版本日志目录。
     dir_global_mf : str
         Global + Mean-Field 版本日志目录。
+    dir_local_no_mf : str
+        不带均场的 Local 版本日志目录。
     dir_local_mf : str
         Local + Mean-Field 版本日志目录。
     smooth_window : int, default 1
@@ -98,7 +107,7 @@ def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf:
                 if m:
                     eps.append(int(m.group(1)))
                     aoi_val = float(m.group(3))
-                    if aoi_val <= 30:
+                    if aoi_val <= max_aoi:
                         aois.append(aoi_val)
                     else:
                         aois.append(np.nan)  # 使用 nan 代替
@@ -115,6 +124,7 @@ def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf:
     logs = [
         ("Global", os.path.join(dir_global, "training.log")),
         ("Global+MF", os.path.join(dir_global_mf, "training.log")),
+        ("Local", os.path.join(dir_local_no_mf, "training.log")),
         ("Local+MF", os.path.join(dir_local_mf, "training.log")),
     ]
 
@@ -141,7 +151,7 @@ def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf:
 
     plt.xlabel('Episode')
     plt.ylabel('Average AoI')
-    plt.title('Average AoI Comparison')
+    plt.title(f'Average AoI Comparison (≤{max_aoi})')
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -154,10 +164,15 @@ def visualize_compare_avg_aoi(dir_global: str, dir_global_mf: str, dir_local_mf:
     print(f"已保存比较曲线图到 {png_path}")
 # 每 60 秒调用一次
 while True:
-    visualize_avg_aoi("logs/mappo_mf_35_15_Shared_Local_MF_GMM2_4e-05/training.log", 3)
-    # visualize_avg_aoi("logs/mappo_mf_21_9_Global_NoMF_4e-05/training.log",3)
+    # visualize_avg_aoi("logs/mappo_mf_105_45_Shared_Global_MF_GMM2_4e-05/training.log", 3, 100)
+    # visualize_avg_aoi("logs/mappo_mf_105_45_Shared_Global_NoMF_GMM2_4e-05/training.log", 3, 100)
+    # time.sleep(20)
+    visualize_compare_avg_aoi(
+        "logs/mappo_mf_105_45_Shared_Global_NoMF_GMM2_4e-05/",
+        "logs/mappo_mf_105_45_Shared_Global_MF_GMM2_4e-05/",
+        "logs/mappo_mf_105_45_Shared_Local_NoMF_GMM2_4e-05/",
+        "logs/mappo_mf_105_45_Shared_Local_MF_GMM2_4e-05/",
+        10,
+        500,
+    )
     time.sleep(20)
-# visualize_compare_avg_aoi("logs/mappo_mf_35_15_Global_NoMF_4e-05/",
-#                         "logs/mappo_mf_35_15_Global_MF_4e-05/",
-#                         "logs/mappo_mf_35_15_Local_MF_2e-05/",
-#                         3)
