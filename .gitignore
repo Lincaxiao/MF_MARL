@@ -12,6 +12,8 @@ trainlog/
 # logs/
 
 test_*
-logs/mfac_*
-logs/*/completed_tasks/
-logs/*/*.png
+# logs/mfac_*
+# logs/*/completed_tasks/
+# logs/*/*.png
+logs/*
+.vscode/

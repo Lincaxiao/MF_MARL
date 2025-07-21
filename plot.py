@@ -165,14 +165,14 @@ def visualize_compare_avg_aoi(
 # 每 60 秒调用一次
 while True:
     # visualize_avg_aoi("logs/mappo_mf_105_45_Shared_Global_MF_GMM2_4e-05/training.log", 3, 100)
-    # visualize_avg_aoi("logs/mappo_mf_105_45_Shared_Global_NoMF_GMM2_4e-05/training.log", 3, 100)
+    visualize_avg_aoi("logs/mappo_mf_63_27_Shared_Global_MF_GMM2_4e-05/training.log", 3, 30)
     # time.sleep(20)
     visualize_compare_avg_aoi(
-        "logs/mappo_mf_105_45_Shared_Global_NoMF_GMM2_4e-05/",
-        "logs/mappo_mf_105_45_Shared_Global_MF_GMM2_4e-05/",
-        "logs/mappo_mf_105_45_Shared_Local_NoMF_GMM2_4e-05/",
-        "logs/mappo_mf_105_45_Shared_Local_MF_GMM2_4e-05/",
-        10,
-        500,
+        "logs/mappo_mf_63_27_Shared_Global_NoMF_GMM2_4e-05/",
+        "logs/mappo_mf_63_27_Shared_Global_MF_GMM2_4e-05/",
+        "logs/mappo_mf_63_27_Shared_Local_NoMF_GMM2_4e-05/",
+        "logs/mappo_mf_63_27_Shared_Local_MF_GMM2_4e-05/",
+        3,
+        30,
     )
     time.sleep(20)

@@ -30,7 +30,7 @@ class EdgeBatchEnv:
             'min_samples': 100,       # 最小样本数量（用于训练GMM）
             'use_gmm': True,          # 是否使用GMM
             'regularization': 1e-6,   # 正则化参数
-            'update_interval': 50,    # GMM更新间隔（训练回合）
+            'update_interval': 1,    # GMM更新间隔（训练回合）
             'buffer_size': 5000,      # 滑动窗口大小（每个变量保留最近 buffer_size 个样本）
         }
 
@@ -95,10 +95,10 @@ class EdgeBatchEnv:
     def train_gmm_models(self):
         """从历史数据训练GMM模型"""
         if not self.gmm_config['use_gmm']:
-            print("GMM训练被禁用，跳过...")
+            # print("GMM训练被禁用，跳过...")
             return False
             
-        print("开始训练GMM模型...")
+        # print("开始训练GMM模型...")
         success_count = 0
         
         for var_name, data in self.history_buffer.items():
@@ -124,18 +124,18 @@ class EdgeBatchEnv:
                 # 存储训练好的模型
                 self.gmm_models[var_name] = gmm
                 success_count += 1
-                print(f"成功训练 {var_name} 的GMM模型 (样本数: {len(data)})")
+                # print(f"成功训练 {var_name} 的GMM模型 (样本数: {len(data)})")
                 
             except Exception as e:
-                print(f"训练 {var_name} 的GMM模型失败: {e}")
+                # print(f"训练 {var_name} 的GMM模型失败: {e}")
                 self.gmm_models[var_name] = None
         
         if success_count > 0:
             self.gmm_trained = True
-            print(f"GMM训练完成，成功训练 {success_count} 个模型")
+            # print(f"GMM训练完成，成功训练 {success_count} 个模型")
             return True
         else:
-            print("GMM训练失败，没有成功训练任何模型")
+            # print("GMM训练失败，没有成功训练任何模型")
             return False
 
     def clear_history_buffer(self):
@@ -340,7 +340,6 @@ class EdgeBatchEnv:
         server_b_sizes = [len(s['b']) for s in self.servers_state]
         server_ts = [s['t'] for s in self.servers_state]
 
-        # 使用预训练的GMM进行快速推断
         mf_features = []
         
         # 用户AoI分布的后验概率

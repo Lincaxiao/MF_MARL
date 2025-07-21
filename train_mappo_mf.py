@@ -583,8 +583,8 @@ if __name__ == '__main__':
     # Scale 表示 user 和 server 放大的倍数
     # Scale = 3
     config = {
-        'n_users': 7 * 9,
-        'n_servers': 3 * 9,
+        'n_users': 7 * 15,
+        'n_servers': 3 * 15,
         'batch_proc_time': {'base': 3, 'per_task': 2},
         'max_batch_size': 3,
         'num_episodes': 500,
