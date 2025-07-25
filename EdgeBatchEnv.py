@@ -20,7 +20,18 @@ class EdgeBatchEnv:
         # print("Initializing Edge Batch Processing Environment...")
         self.n_users = n_users
         self.n_servers = n_servers
-        self.batch_proc_time_config = batch_proc_time
+        # ------- 批处理时间配置 -------
+        if isinstance(batch_proc_time, list):
+            if len(batch_proc_time) != self.n_servers:
+                raise ValueError("batch_proc_time 列表长度必须与 n_servers 一致")
+            self.batch_proc_time_list = batch_proc_time
+        elif isinstance(batch_proc_time, dict):
+            self.batch_proc_time_list = [dict(batch_proc_time) for _ in range(self.n_servers)]
+        else:
+            raise TypeError("batch_proc_time 应为 dict 或 list[dict]")
+
+        # 向后兼容
+        self.batch_proc_time_config = self.batch_proc_time_list[0]
         self.n_agents = self.n_users + self.n_servers
         self.max_batch_size = max_batch_size
 
@@ -217,11 +228,28 @@ class EdgeBatchEnv:
 
         return self._get_all_obs()
 
-    def _calculate_batch_time(self, batch_size: int) -> int:
-        if batch_size == 0: return 0
-        base = self.batch_proc_time_config.get('base', 2)
-        per_task = self.batch_proc_time_config.get('per_task', 1)
-        return base + per_task * batch_size
+    def _calculate_batch_time(self, batch_size: int, server_id: int) -> int:
+        if batch_size == 0:
+            return 0
+
+        config = self.batch_proc_time_list[server_id]
+
+        # 1) 若包含 base/per_task 键，则使用线性模型
+        if 'base' in config or 'per_task' in config:
+            base = config.get('base', 2)
+            per_task = config.get('per_task', 1)
+            return base + per_task * batch_size
+
+        # 2) 否则视为 {batch_size: time} 阈值映射
+        sorted_thresholds = sorted(config.keys())
+        for threshold in sorted_thresholds:
+            if batch_size <= threshold:
+                return config[threshold]
+
+        if sorted_thresholds:
+            return config[sorted_thresholds[-1]]
+
+        return 0
 
     def step(self, actions: list):
         user_actions = actions[:self.n_users]
@@ -268,7 +296,7 @@ class EdgeBatchEnv:
             batch_size = min(len(server['q']), self.max_batch_size)
             batch_tasks = [server['q'].popleft() for _ in range(batch_size)]
             server['b'] = batch_tasks
-            server['t'] = self._calculate_batch_time(len(server['b']))
+            server['t'] = self._calculate_batch_time(len(server['b']), server_id)
 
     def _update_env_state(self):
         for user in self.users_state: #用户AoI每个时间步加一，如果任务正在处理，h也每个时间步加一

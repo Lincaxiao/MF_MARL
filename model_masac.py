@@ -25,7 +25,10 @@ class ReplayBuffer:
         next_global_state: np.ndarray,
         done: bool,
         action_mask: list = None,
+        next_action_mask: list = None,
     ):
+        """存储一次交互。
+        参数说明同 train_masac.Trainer 中调用；新增 next_action_mask 用于 target 期望的合法动作过滤。"""
         experience = (
             obs,
             global_state,
@@ -35,6 +38,7 @@ class ReplayBuffer:
             next_global_state,
             done,
             action_mask,
+            next_action_mask,
         )
         self.buffer.append(experience)
 
@@ -49,6 +53,7 @@ class ReplayBuffer:
             next_gs_list,
             done_list,
             mask_list,
+            next_mask_list,
         ) = zip(*batch)
 
         gs_batch = np.array(gs_list, dtype=np.float32)
@@ -66,6 +71,7 @@ class ReplayBuffer:
             next_gs_batch,
             done_batch,
             mask_list,
+            next_mask_list,
         )
 
     def __len__(self):
@@ -117,73 +123,112 @@ class Critic(nn.Module):
 
 
 class HierarchicalActor(nn.Module):
-    """两层策略：先决定是否分配，再选择服务器。只使用局部观测。"""
-
-    def __init__(self, obs_dim: int, n_servers: int, hidden_size: int = 128):
+    """
+    具备顺序不变性的层次化 Actor。
+    使用共享的编码器处理服务器状态，并通过聚合来消除位置偏见。
+    """
+    def __init__(self, user_obs_dim: int, server_obs_dim: int, n_servers: int, hidden_size: int = 128):
         super().__init__()
         self.n_servers = n_servers
-        self.action_dim = n_servers + 1  # 0 表示不分配
-        self.base = nn.Sequential(
-            nn.Linear(obs_dim, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
+        self.action_dim = n_servers + 1
+
+        # 1. 服务器状态编码器 (权重共享)
+        self.server_encoder = nn.Sequential(
+            nn.Linear(server_obs_dim, hidden_size),
             nn.ReLU(),
         )
-        self.head_alloc = nn.Linear(hidden_size, 2)  # 是否分配
-        self.head_server = nn.Linear(hidden_size, n_servers)  # 服务器选择
+
+        # 2. 用聚合后的服务器信息 + 用户自身信息 决定 "是否分配"
+        self.alloc_net = nn.Sequential(
+            nn.Linear(user_obs_dim + hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, 2)
+        )
+
+        # 3. 对每台服务器单独打分 (共享权重)
+        self.score_net = nn.Sequential(
+            nn.Linear(user_obs_dim + hidden_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, 1)
+        )
 
     @staticmethod
     def _build_joint_probs(alloc_logits: torch.Tensor, server_logits: torch.Tensor):
-        alloc_probs = F.softmax(alloc_logits, dim=-1)  # (B,2)
-        server_probs = F.softmax(server_logits, dim=-1)  # (B,n_servers)
+        alloc_probs = F.softmax(alloc_logits, dim=-1)
+        server_probs = F.softmax(server_logits, dim=-1)
         p_no_alloc = alloc_probs[:, 0:1]
         p_alloc = alloc_probs[:, 1:2]
         joint_server = p_alloc * server_probs
-        probs = torch.cat([p_no_alloc, joint_server], dim=-1)  # (B, n_servers+1)
+        probs = torch.cat([p_no_alloc, joint_server], dim=-1)
         probs = torch.clamp(probs, min=1e-12)
         logits = torch.log(probs)
         return logits, probs
 
-    def forward(self, obs: torch.Tensor):
-        h = self.base(obs)
-        alloc_logits = self.head_alloc(h)
-        server_logits = self.head_server(h)
+    def forward(self, user_obs: torch.Tensor, servers_obs: torch.Tensor):
+        """
+        Args:
+            user_obs (torch.Tensor): 用户自身观测, shape (B, user_obs_dim)
+            servers_obs (torch.Tensor): 所有服务器的观测, shape (B, n_servers, server_obs_dim)
+        """
+        # 1. 编码所有服务器状态
+        # (B, n_servers, server_obs_dim) -> (B * n_servers, server_obs_dim)
+        batch_size = servers_obs.size(0)
+        servers_obs_flat = servers_obs.view(-1, servers_obs.shape[-1])
+        encoded_servers = self.server_encoder(servers_obs_flat)
+        # (B * n_servers, hidden_size) -> (B, n_servers, hidden_size)
+        encoded_servers = encoded_servers.view(batch_size, self.n_servers, -1)
+
+        # 2. 聚合服务器信息 (均值) 用于是否分配逻辑
+        aggregated_servers = torch.mean(encoded_servers, dim=1)  # (B, hidden)
+
+        # 3. 计算 alloc_logits
+        alloc_input = torch.cat([user_obs, aggregated_servers], dim=-1)
+        alloc_logits = self.alloc_net(alloc_input)               # (B,2)
+
+        # 4. 为每台服务器计算打分
+        #    concat: (B, n, user_dim+hidden) -> (B*n, ...)
+        user_expand = user_obs.unsqueeze(1).expand(-1, self.n_servers, -1)
+        per_server_input = torch.cat([user_expand, encoded_servers], dim=-1)
+        per_server_input = per_server_input.reshape(-1, per_server_input.shape[-1])
+        scores = self.score_net(per_server_input).view(batch_size, self.n_servers)  # (B, n_servers)
+        server_logits = scores
+        
         joint_logits, _ = self._build_joint_probs(alloc_logits, server_logits)
         return joint_logits
 
-    def get_action(self, obs: torch.Tensor, action_mask: torch.Tensor = None):
-        h = self.base(obs)
+    def get_action(self, user_obs: torch.Tensor, servers_obs: torch.Tensor, action_mask: torch.Tensor = None):
+        """从联合概率分布中一次性采样动作。"""
+        logits = self.forward(user_obs, servers_obs)
+
+        if action_mask is not None:
+            if logits.dim() == 1:
+                logits = logits.unsqueeze(0)
+            if action_mask.dim() == 1:
+                action_mask = action_mask.unsqueeze(0)
+            logits = logits.masked_fill(~action_mask, -1e10)
+
+        dist = Categorical(logits=logits)
+        action = dist.sample()
+        log_prob = dist.log_prob(action)
+
+        # 如果只有一个实例 (B=1)，返回 item()
+        if action.numel() == 1:
+            return action.item(), log_prob.item()
+        return action, log_prob
+
+    def get_policy(self, user_obs: torch.Tensor, servers_obs: torch.Tensor):
+        """获取策略的概率和 log 概率。"""
+        # 与 forward 逻辑类似，但需要返回 probs
+        batch_size = servers_obs.size(0)
+        servers_obs_flat = servers_obs.view(-1, servers_obs.shape[-1])
+        encoded_servers = self.server_encoder(servers_obs_flat)
+        encoded_servers = encoded_servers.view(batch_size, self.n_servers, -1)
+        aggregated_servers = torch.mean(encoded_servers, dim=1)
+        combined_obs = torch.cat([user_obs, aggregated_servers], dim=-1)
+        h = self.base(combined_obs)
         alloc_logits = self.head_alloc(h)
         server_logits = self.head_server(h)
-
-        alloc_dist = Categorical(logits=alloc_logits)
-        alloc_action = alloc_dist.sample()
-        log_prob_alloc = alloc_dist.log_prob(alloc_action)
-
-        if alloc_action.item() == 0:
-            final_action = torch.tensor([0], device=obs.device)
-            log_prob = log_prob_alloc
-        else:
-            if action_mask is not None:
-                server_mask = action_mask[:, 1:].clone()
-                server_logits = server_logits.masked_fill(~server_mask, -1e10)
-                if (~server_mask).all():
-                    final_action = torch.tensor([0], device=obs.device)
-                    log_prob = log_prob_alloc
-                    return final_action.item(), log_prob
-            server_dist = Categorical(logits=server_logits)
-            server_action = server_dist.sample()
-            log_prob_server = server_dist.log_prob(server_action)
-
-            final_action = server_action + 1
-            log_prob = log_prob_alloc + log_prob_server
-
-        return final_action.item(), log_prob
-
-    def get_policy(self, obs: torch.Tensor):
-        h = self.base(obs)
-        alloc_logits = self.head_alloc(h)
-        server_logits = self.head_server(h)
-        joint_logits, probs = self._build_joint_probs(alloc_logits, server_logits)
+        
+        _, probs = self._build_joint_probs(alloc_logits, server_logits)
         log_probs = torch.log(probs)
-        return probs, log_probs 
+        return probs, log_probs

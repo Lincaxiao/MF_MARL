@@ -70,32 +70,35 @@ def visualize_avg_aoi(log_file: str, smooth_window: int = 1, max_aoi: float = 30
         print("未安装 matplotlib")
 
 def visualize_compare_avg_aoi(
-    dir_global: str,
-    dir_global_mf: str,
-    dir_local_no_mf: str,
-    dir_local_mf: str,
+    dir_mappo: str,
+    dir_masac: str,
+    dir_ippo: str,
+    dir_mfppo: str,
     smooth_window: int = 1,
     max_aoi: float = 30,
+    max_episodes: int = -1,
 ):
     """在同一张图中比较四种实验 (Global, Global+MF, Local, Local+MF) 的 Avg AoI 曲线。
 
     参数
     ------
-    dir_global : str
+    dir_mappo : str
         不带均场的 Global 版本日志目录。
-    dir_global_mf : str
+    dir_masac : str
         Global + Mean-Field 版本日志目录。
-    dir_local_no_mf : str
+    dir_ippo : str
         不带均场的 Local 版本日志目录。
-    dir_local_mf : str
+    dir_mfppo : str
         Local + Mean-Field 版本日志目录。
     smooth_window : int, default 1
         滑动平均窗口大小，=1 表示不平滑。
+    max_episodes : int, default -1
+        要绘制的最大回合数，-1 表示绘制所有回合。
     """
     pattern = re.compile(r"Episode:\s*(\d+)/(\d+).*Avg AoI:\s*([\-\d\.]+)")
 
     def _read_and_smooth(log_path: str):
-        """读取 log 并返回 (episodes, aoi_values)；根据 smooth_window 进行平滑。"""
+        """读取 log 并返回 (episodes, aoi_values)；根据 smooth_window 进行平滑."""
         if not os.path.isfile(log_path):
             print(f"日志文件不存在: {log_path}")
             return [], []
@@ -105,12 +108,16 @@ def visualize_compare_avg_aoi(
             for line in f:
                 m = pattern.search(line)
                 if m:
-                    eps.append(int(m.group(1)))
+                    ep_idx = int(m.group(1))
+                    if max_episodes != -1 and ep_idx > max_episodes:
+                        break  # 如果回合数超过限制，则停止读取
+                    
                     aoi_val = float(m.group(3))
                     if aoi_val <= max_aoi:
                         aois.append(aoi_val)
                     else:
                         aois.append(np.nan)  # 使用 nan 代替
+                    eps.append(ep_idx)
         if not eps:
             return [], []
 
@@ -122,10 +129,10 @@ def visualize_compare_avg_aoi(
         return eps, aois
 
     logs = [
-        ("Global", os.path.join(dir_global, "training.log")),
-        ("Global+MF", os.path.join(dir_global_mf, "training.log")),
-        ("Local", os.path.join(dir_local_no_mf, "training.log")),
-        ("Local+MF", os.path.join(dir_local_mf, "training.log")),
+        ("MAPPO", os.path.join(dir_mappo, "training.log")),
+        ("MASAC", os.path.join(dir_masac, "training.log")),
+        ("IPPO", os.path.join(dir_ippo, "training.log")),
+        ("MFPPO", os.path.join(dir_mfppo, "training.log")),
     ]
 
     all_data = []
@@ -151,28 +158,30 @@ def visualize_compare_avg_aoi(
 
     plt.xlabel('Episode')
     plt.ylabel('Average AoI')
-    plt.title(f'Average AoI Comparison (≤{max_aoi})')
+    title_suffix = f' (First {max_episodes} Episodes)' if max_episodes != -1 else ''
+    plt.title(f'Average AoI Comparison (≤{max_aoi}){title_suffix}')
     plt.legend()
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
 
     # 保存图像（保存在第一个目录）
-    save_dir = dir_global
+    save_dir = dir_mappo
     suffix = f"_smooth{smooth_window}" if smooth_window > 1 else ""
     png_path = os.path.join(save_dir, f'avg_aoi_compare{suffix}.png')
     plt.savefig(png_path, dpi=300)
     print(f"已保存比较曲线图到 {png_path}")
 # 每 60 秒调用一次
 while True:
-    # visualize_avg_aoi("logs/mappo_mf_105_45_Shared_Global_MF_GMM2_4e-05/training.log", 3, 100)
-    visualize_avg_aoi("logs/mappo_mf_63_27_Shared_Global_MF_GMM2_4e-05/training.log", 3, 30)
+    visualize_avg_aoi("logs/Real_mappo_mf_35_5_Global_NoMF_GMM2_5e-05/training.log", 3, 500)
+    visualize_avg_aoi("logs/Real_mappo_mf_35_5_Local_NoMF_GMM2_4e-05/training.log", 3, 500)
     # time.sleep(20)
     visualize_compare_avg_aoi(
-        "logs/mappo_mf_63_27_Shared_Global_NoMF_GMM2_4e-05/",
-        "logs/mappo_mf_63_27_Shared_Global_MF_GMM2_4e-05/",
-        "logs/mappo_mf_63_27_Shared_Local_NoMF_GMM2_4e-05/",
-        "logs/mappo_mf_63_27_Shared_Local_MF_GMM2_4e-05/",
+        "logs/Real_mappo_mf_35_5_Shared_Global_NoMF_GMM2_4e-05/",
+        "logs/Real_masac_35_5_Global_NoMF_5e-07/",
+        "logs/Real_mappo_mf_35_5_Local_NoMF_GMM2_4e-05/",
+        "logs/Real_mappo_mf_35_5_Local_MF_GMM2_5e-05/",
         3,
-        30,
+        150,
+        max_episodes=500, # 示例：只绘制前1000个回合
     )
     time.sleep(20)
